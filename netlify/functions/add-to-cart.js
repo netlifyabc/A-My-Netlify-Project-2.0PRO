@@ -1,26 +1,21 @@
+// netlify/functions/add-to-cart.js
+
 const { createCartWithItem } = require('../../lib/shopify');
 
-// 辅助函数：统一设置 CORS 响应头
-function getCorsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*', // 生产环境建议改为指定域名
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
-}
-
-exports.handler = async function(event, context) {
-  // 处理 CORS 预检请求（OPTIONS）
+exports.handler = async function(event) {
+  // 处理 CORS 预检请求
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: getCorsHeaders(),
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
       body: '',
     };
   }
 
-  // 只允许 POST 请求
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -29,13 +24,14 @@ exports.handler = async function(event, context) {
     };
   }
 
-  const headers = getCorsHeaders();
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json',
+  };
 
   try {
-    // 解析请求体
     const { merchandiseId, quantity } = JSON.parse(event.body);
 
-    // 简单参数校验
     if (!merchandiseId || !quantity) {
       return {
         statusCode: 400,
@@ -44,11 +40,11 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 调用 Shopify 创建购物车并添加商品
+    // 调用你的 Shopify 创建购物车并添加商品方法
     const result = await createCartWithItem(merchandiseId, quantity);
 
-    // 如果 Shopify 返回用户错误，直接返回给前端
-    if (result.userErrors?.length) {
+    // 处理 Shopify 返回的用户错误
+    if (result.userErrors && result.userErrors.length > 0) {
       return {
         statusCode: 400,
         headers,
@@ -56,30 +52,18 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 返回成功的购物车信息
+    // 成功返回购物车数据
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify(result.cart),
     };
-
   } catch (err) {
     console.error('Error in add-to-cart function:', err);
-
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
-        error: 'Server Error',
-        message: err.message,
-        // 只有开发环境才返回堆栈信息，避免泄露
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-      }),
+      body: JSON.stringify({ error: 'Server Error', details: err.message }),
     };
   }
 };
-
-
-
-
-
