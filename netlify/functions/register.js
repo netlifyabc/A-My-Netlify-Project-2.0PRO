@@ -50,7 +50,7 @@ exports.handler = async function(event) {
         lastName,
         email,
         password,
-        acceptsMarketing: false,
+        acceptsMarketing: false
       }
     };
 
@@ -102,13 +102,13 @@ exports.handler = async function(event) {
     console.error('Register error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+      body: JSON.stringify({ error: 'Internal Server Error' }),
     };
   }
 };
 
-
-
+console.log('SHOPIFY_STORE_DOMAIN:', process.env.SHOPIFY_STORE_DOMAIN);
+console.log('SHOPIFY_STOREFRONT_TOKEN:', process.env.SHOPIFY_STOREFRONT_TOKEN ? '****' : 'NOT SET');
 
 
 
