@@ -1,6 +1,4 @@
-const fetch = require('node-fetch');
-
-exports.handler = async function(event, context) {
+exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -18,20 +16,27 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN; // 你的店铺域名，如 yourstore.myshopify.com
-    const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN; // 你的 Admin API 访问令牌
+    const SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
+    const STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
-    // GraphQL mutation 创建客户
+    if (!SHOP_DOMAIN || !STOREFRONT_TOKEN) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Missing Shopify Storefront API credentials' }),
+      };
+    }
+
     const query = `
       mutation customerCreate($input: CustomerCreateInput!) {
         customerCreate(input: $input) {
           customer {
             id
-            email
             firstName
             lastName
+            email
           }
-          userErrors {
+          customerUserErrors {
+            code
             field
             message
           }
@@ -46,30 +51,36 @@ exports.handler = async function(event, context) {
         email,
         password,
         acceptsMarketing: false
-      },
+      }
     };
 
-    const response = await fetch(`https://${SHOP_DOMAIN}/admin/api/2023-04/graphql.json`, {
+    const response = await fetch(`https://${SHOP_DOMAIN}/api/2024-04/graphql.json`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': ADMIN_TOKEN,
+        'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
       },
       body: JSON.stringify({ query, variables }),
     });
 
-    const result = await response.json();
-
-    // 处理可能的错误
-    if (result.errors) {
-      // GraphQL 错误
+    if (!response.ok) {
+      const text = await response.text();
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Shopify API error', details: result.errors }),
+        statusCode: response.status,
+        body: JSON.stringify({ error: 'Shopify API request failed', details: text }),
       };
     }
 
-    const userErrors = result.data.customerCreate.userErrors;
+    const result = await response.json();
+
+    if (result.errors) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Shopify API returned errors', details: result.errors }),
+      };
+    }
+
+    const userErrors = result.data.customerCreate.customerUserErrors;
     if (userErrors.length > 0) {
       return {
         statusCode: 400,
@@ -77,7 +88,6 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 注册成功，返回客户信息
     const customer = result.data.customerCreate.customer;
 
     return {
@@ -87,13 +97,19 @@ exports.handler = async function(event, context) {
         customer,
       }),
     };
+
   } catch (error) {
-    console.error('Error in register function:', error);
+    console.error('Register error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal Server Error' }),
     };
   }
 };
+
+console.log('SHOPIFY_STORE_DOMAIN:', process.env.SHOPIFY_STORE_DOMAIN);
+console.log('SHOPIFY_STOREFRONT_TOKEN:', process.env.SHOPIFY_STOREFRONT_TOKEN ? '****' : 'NOT SET');
+
+
 
 
