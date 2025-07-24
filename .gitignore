@@ -1,0 +1,25 @@
+# Local Netlify folder
+.netlify
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Next.js build output
+.next/
+out/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac system files
+.DS_Store
+
+
+# Optional: VSCode settings folder
+.vscode/
