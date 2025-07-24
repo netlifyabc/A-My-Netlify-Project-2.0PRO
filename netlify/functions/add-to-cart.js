@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+// ✅ Node.js 18+ 原生支持 fetch，无需引入 node-fetch
 
 // 🛠️ 环境变量检查
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
@@ -111,7 +111,6 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body);
-
     const { merchandiseId, quantity = 1, cartId } = body;
 
     if (!merchandiseId) {
@@ -124,7 +123,7 @@ exports.handler = async (event) => {
     let responseData;
 
     if (cartId) {
-      // ➕ 添加到已有购物车
+      // ➕ 添加商品到已有购物车
       responseData = await shopifyFetch(CART_LINES_ADD_QUERY, {
         cartId,
         lines: [{ merchandiseId, quantity }],
@@ -160,6 +159,7 @@ exports.handler = async (event) => {
     };
   }
 };
+
 
 
 
