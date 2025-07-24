@@ -1,5 +1,3 @@
-// netlify/functions/test-shopify.js
-
 const { shopifyFetch } = require('../../lib/shopify');
 
 exports.handler = async function() {
@@ -18,12 +16,10 @@ exports.handler = async function() {
       body: JSON.stringify({ shopName: data.shop.name }),
     };
   } catch (error) {
+    console.error('Error in test-shopify:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message }),
     };
   }
 };
-
-
-
