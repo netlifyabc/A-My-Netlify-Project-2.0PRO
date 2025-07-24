@@ -1,13 +1,14 @@
 // netlify/functions/add-to-cart.js
+
 const { createCartWithItem } = require('../../lib/shopify');
 
-exports.handler = async function(event, context) {
-  // 处理 CORS 预检请求（OPTIONS）
+exports.handler = async function(event) {
+  // 处理 CORS 预检请求
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*', // 或者指定前端域名
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
@@ -15,18 +16,14 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // 仅允许 POST 请求
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({ message: 'Method Not Allowed' }),
     };
   }
 
-  // 设置跨域响应头
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Content-Type': 'application/json',
@@ -43,9 +40,11 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // 调用你的 Shopify 创建购物车并添加商品方法
     const result = await createCartWithItem(merchandiseId, quantity);
 
-    if (result.userErrors?.length) {
+    // 处理 Shopify 返回的用户错误
+    if (result.userErrors && result.userErrors.length > 0) {
       return {
         statusCode: 400,
         headers,
@@ -53,19 +52,18 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // 成功返回购物车数据
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify(result.cart),
     };
   } catch (err) {
-    console.error('Error in Netlify function /add-to-cart:', err);
+    console.error('Error in add-to-cart function:', err);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Server Error' }),
+      body: JSON.stringify({ error: 'Server Error', details: err.message }),
     };
   }
 };
-
-
