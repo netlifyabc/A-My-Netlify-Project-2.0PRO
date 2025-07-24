@@ -1,12 +1,12 @@
 const { createCartWithItem } = require('../../lib/shopify');
 
 exports.handler = async function(event, context) {
-  // 处理 CORS 预检请求（OPTIONS）
+  // 允许跨域预检请求
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*', // 或者指定你的前端域名
+        'Access-Control-Allow-Origin': '*', // 生产环境可改成具体域名
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
@@ -14,7 +14,7 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // 仅允许 POST 请求
+  // 只允许 POST 请求
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -25,13 +25,14 @@ exports.handler = async function(event, context) {
     };
   }
 
-  // 设置跨域响应头
+  // 统一响应头
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Content-Type': 'application/json',
   };
 
   try {
+    // 解析请求体
     const { merchandiseId, quantity } = JSON.parse(event.body);
 
     if (!merchandiseId || !quantity) {
@@ -42,9 +43,11 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // 调用 Shopify API 创建购物车并添加商品
     const result = await createCartWithItem(merchandiseId, quantity);
 
-    if (result.userErrors?.length) {
+    // 返回 Shopify 用户错误信息
+    if (result.userErrors && result.userErrors.length > 0) {
       return {
         statusCode: 400,
         headers,
@@ -52,18 +55,24 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // 成功响应购物车数据
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(result.cart),
+      body: JSON.stringify({ success: true, cart: result.cart }),
     };
   } catch (err) {
-    console.error('Error in Netlify function /add-to-cart:', err);
+    // 打印详细错误日志，方便排查
+    console.error('Error in Netlify function /add-to-cart:', err.stack || err);
+
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Server Error' }),
+      body: JSON.stringify({
+        success: false,
+        error: 'Internal Server Error',
+        message: err.message || 'Unknown error',
+      }),
     };
   }
 };
-
