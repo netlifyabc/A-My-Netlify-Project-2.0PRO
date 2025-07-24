@@ -1,4 +1,4 @@
-// ✅ Node.js 18+ 原生支持 fetch，无需引入 node-fetch
+// ✅ Node.js 18+ 原生支持 fetch，无需 node-fetch
 
 // 🛠️ 环境变量检查
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
@@ -11,7 +11,14 @@ if (!SHOPIFY_DOMAIN || !API_VERSION || !TOKEN) {
 
 const endpoint = `https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`;
 
-// 🧠 通用 Shopify fetch 包装器
+// CORS 允许的响应头
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*', // 生产环境建议改成你前端域名
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+// Shopify GraphQL 请求包装
 async function shopifyFetch(query, variables = {}) {
   try {
     const res = await fetch(endpoint, {
@@ -44,7 +51,7 @@ async function shopifyFetch(query, variables = {}) {
   }
 }
 
-// 🧩 GraphQL 模板
+// GraphQL 查询模板
 const CART_CREATE_QUERY = `
   mutation cartCreate($input: CartInput!) {
     cartCreate(input: $input) {
@@ -103,10 +110,23 @@ const CART_LINES_ADD_QUERY = `
   }
 `;
 
-// ✅ 主函数
+// 主函数（包含 CORS 处理）
 exports.handler = async (event) => {
+  // 处理预检请求（OPTIONS）
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: 'OK',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: 'Method Not Allowed',
+    };
   }
 
   try {
@@ -116,6 +136,7 @@ exports.handler = async (event) => {
     if (!merchandiseId) {
       return {
         statusCode: 400,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ error: 'Missing merchandiseId in request body' }),
       };
     }
@@ -123,13 +144,11 @@ exports.handler = async (event) => {
     let responseData;
 
     if (cartId) {
-      // ➕ 添加商品到已有购物车
       responseData = await shopifyFetch(CART_LINES_ADD_QUERY, {
         cartId,
         lines: [{ merchandiseId, quantity }],
       });
     } else {
-      // 🛒 创建新购物车
       responseData = await shopifyFetch(CART_CREATE_QUERY, {
         input: {
           lines: [{ merchandiseId, quantity }],
@@ -144,22 +163,23 @@ exports.handler = async (event) => {
     if (userErrors?.length) {
       return {
         statusCode: 400,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ error: 'User input error', details: userErrors }),
       };
     }
 
     return {
       statusCode: 200,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ cart }),
     };
   } catch (err) {
     return {
       statusCode: 500,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ error: err.message || 'Internal Server Error' }),
     };
   }
 };
-
-
 
 
