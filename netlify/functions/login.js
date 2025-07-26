@@ -1,16 +1,12 @@
 // netlify/functions/login.js
 
-// 动态导入 node-fetch
-let fetch;
-const fetchPromise = import('node-fetch').then(mod => {
-  fetch = mod.default;
-});
+import jwt from 'jsonwebtoken';
+import fetch from 'node-fetch';
 
-exports.handler = async function (event) {
-  await fetchPromise; // 确保 fetch 可用
+const ALLOWED_ORIGIN = 'https://netlifyabc.github.io';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-  const ALLOWED_ORIGIN = 'https://netlifyabc.github.io';
-
+export async function handler(event) {
   const headers = {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -51,6 +47,7 @@ exports.handler = async function (event) {
 
     const endpoint = `https://${shopifyDomain}/api/${apiVersion}/graphql.json`;
 
+    // Shopify 登录认证请求
     const query = `
       mutation customerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
         customerAccessTokenCreate(input: $input) {
@@ -84,6 +81,7 @@ exports.handler = async function (event) {
     });
 
     const result = await response.json();
+
     const errors = result.data.customerAccessTokenCreate.customerUserErrors;
     const tokenInfo = result.data.customerAccessTokenCreate.customerAccessToken;
 
@@ -95,10 +93,11 @@ exports.handler = async function (event) {
       };
     }
 
-    // 可选：查询客户信息
+    // 查询客户信息，方便放进 JWT 载荷
     const customerQuery = `
       {
         customer(customerAccessToken: "${tokenInfo.accessToken}") {
+          id
           firstName
           lastName
           email
@@ -118,17 +117,36 @@ exports.handler = async function (event) {
     const customerResult = await customerResponse.json();
     const customer = customerResult.data?.customer;
 
+    if (!customer) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Failed to fetch customer data' }),
+      };
+    }
+
+    // 生成自己的 JWT，载荷可以根据需要调整
+    const payload = {
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+    };
+
+    const jwtToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         message: 'Login successful',
-        token: tokenInfo.accessToken,
-        expiresAt: tokenInfo.expiresAt,
+        token: jwtToken,          // 返回自己的 JWT
+        expiresIn: 7 * 24 * 3600, // 7天秒数
         customer,
       }),
     };
   } catch (error) {
+    console.error('Login error:', error);
     return {
       statusCode: 500,
       headers,
@@ -139,12 +157,4 @@ exports.handler = async function (event) {
       }),
     };
   }
-
-
-
-
-};
-
-
-
-
+} 

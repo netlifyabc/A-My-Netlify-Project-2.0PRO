@@ -1,0 +1,24 @@
+<button id="send">发送 POST 请求</button>
+<pre id="result"></pre>
+
+<script>
+document.getElementById('send').onclick = async () => {
+  try {
+    const response = await fetch('https://my-netlify-new.netlify.app/.netlify/functions/echo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ test: 'Hello CORS' }),
+    });
+    const data = await response.json();
+    document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    document.getElementById('result').textContent = 'Fetch error: ' + err.message;
+  }
+};
+</script>
+
+
+
+
+
+
