@@ -1,32 +1,53 @@
-exports.handler = async function(event) {
+// netlify/functions/register.js
+
+exports.handler = async function (event) {
+  const ALLOWED_ORIGIN = 'https://netlifyabc.github.io';
+
+  const headers = {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json',
+  };
+
+  // 预检请求直接返回
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: '',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Method Not Allowed' }),
     };
   }
 
   try {
+    // 动态导入 node-fetch
+    const fetch = (await import('node-fetch')).default;
+
     const { firstName, lastName, email, password } = JSON.parse(event.body);
 
-    if (!firstName || !lastName || !email || !password) {
+    if (!email || !password || !firstName || !lastName) {
       return {
         statusCode: 400,
+        headers,
         body: JSON.stringify({ error: 'Missing required fields' }),
       };
     }
 
-    const SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
-    const STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
+    const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-01';
+    const storefrontToken = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
-    if (!SHOP_DOMAIN || !STOREFRONT_TOKEN) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Missing Shopify Storefront API credentials' }),
-      };
-    }
+    const endpoint = `https://${shopifyDomain}/api/${apiVersion}/graphql.json`;
 
-    const query = `
+    const mutation = `
       mutation customerCreate($input: CustomerCreateInput!) {
         customerCreate(input: $input) {
           customer {
@@ -36,7 +57,6 @@ exports.handler = async function(event) {
             email
           }
           customerUserErrors {
-            code
             field
             message
           }
@@ -45,70 +65,60 @@ exports.handler = async function(event) {
     `;
 
     const variables = {
-      input: {
-        firstName,
-        lastName,
-        email,
-        password,
-        acceptsMarketing: false
-      }
+      input: { firstName, lastName, email, password },
     };
 
-    const response = await fetch(`https://${SHOP_DOMAIN}/api/2024-04/graphql.json`, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+        'X-Shopify-Storefront-Access-Token': storefrontToken,
       },
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({ query: mutation, variables }),
     });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({ error: 'Shopify API request failed', details: text }),
-      };
-    }
 
     const result = await response.json();
 
     if (result.errors) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Shopify API returned errors', details: result.errors }),
+        headers,
+        body: JSON.stringify({ error: 'Shopify error', details: result.errors }),
       };
     }
 
-    const userErrors = result.data.customerCreate.customerUserErrors;
-    if (userErrors.length > 0) {
+    const { customer, customerUserErrors } = result.data.customerCreate;
+
+    if (customerUserErrors && customerUserErrors.length > 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'User input error', details: userErrors }),
+        headers,
+        body: JSON.stringify({ error: 'Shopify validation failed', details: customerUserErrors }),
       };
     }
-
-    const customer = result.data.customerCreate.customer;
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({
         message: 'Customer created successfully',
         customer,
       }),
     };
-
   } catch (error) {
     console.error('Register error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
+      headers,
+      body: JSON.stringify({
+        error: 'Internal Server Error',
+        message: error.message,
+        stack: error.stack,
+      }),
     };
   }
-};
 
-console.log('SHOPIFY_STORE_DOMAIN:', process.env.SHOPIFY_STORE_DOMAIN);
-console.log('SHOPIFY_STOREFRONT_TOKEN:', process.env.SHOPIFY_STOREFRONT_TOKEN ? '****' : 'NOT SET');
+};
 
 
 

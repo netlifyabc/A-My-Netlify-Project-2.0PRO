@@ -1,7 +1,35 @@
-exports.handler = async function(event) {
+// netlify/functions/login.js
+
+// 动态导入 node-fetch
+let fetch;
+const fetchPromise = import('node-fetch').then(mod => {
+  fetch = mod.default;
+});
+
+exports.handler = async function (event) {
+  await fetchPromise; // 确保 fetch 可用
+
+  const ALLOWED_ORIGIN = 'https://netlifyabc.github.io';
+
+  const headers = {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Content-Type': 'application/json',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: '',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Method Not Allowed' }),
     };
   }
@@ -12,19 +40,16 @@ exports.handler = async function(event) {
     if (!email || !password) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing required fields: email and password' }),
+        headers,
+        body: JSON.stringify({ error: 'Email and password are required' }),
       };
     }
 
-    const SHOP_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
-    const STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
+    const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-04';
+    const storefrontToken = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
-    if (!SHOP_DOMAIN || !STOREFRONT_TOKEN) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Missing Shopify Storefront API credentials' }),
-      };
-    }
+    const endpoint = `https://${shopifyDomain}/api/${apiVersion}/graphql.json`;
 
     const query = `
       mutation customerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
@@ -34,7 +59,6 @@ exports.handler = async function(event) {
             expiresAt
           }
           customerUserErrors {
-            code
             field
             message
           }
@@ -42,66 +66,85 @@ exports.handler = async function(event) {
       }
     `;
 
-    const variables = {
-      input: {
-        email,
-        password,
-      },
-    };
-
-    const response = await fetch(`https://${SHOP_DOMAIN}/api/2024-04/graphql.json`, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+        'X-Shopify-Storefront-Access-Token': storefrontToken,
       },
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({
+        query,
+        variables: {
+          input: {
+            email,
+            password,
+          },
+        },
+      }),
     });
 
-    if (!response.ok) {
-      const text = await response.text();
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({ error: 'Shopify API request failed', details: text }),
-      };
-    }
-
     const result = await response.json();
+    const errors = result.data.customerAccessTokenCreate.customerUserErrors;
+    const tokenInfo = result.data.customerAccessTokenCreate.customerAccessToken;
 
-    if (result.errors) {
+    if (errors.length > 0 || !tokenInfo) {
       return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Shopify API returned errors', details: result.errors }),
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ error: errors[0]?.message || 'Authentication failed' }),
       };
     }
 
-    const userErrors = result.data.customerAccessTokenCreate.customerUserErrors;
-    if (userErrors.length > 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'User input error', details: userErrors }),
-      };
-    }
+    // 可选：查询客户信息
+    const customerQuery = `
+      {
+        customer(customerAccessToken: "${tokenInfo.accessToken}") {
+          firstName
+          lastName
+          email
+        }
+      }
+    `;
 
-    const tokenData = result.data.customerAccessTokenCreate.customerAccessToken;
+    const customerResponse = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': storefrontToken,
+      },
+      body: JSON.stringify({ query: customerQuery }),
+    });
+
+    const customerResult = await customerResponse.json();
+    const customer = customerResult.data?.customer;
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({
         message: 'Login successful',
-        accessToken: tokenData.accessToken,
-        expiresAt: tokenData.expiresAt,
+        token: tokenInfo.accessToken,
+        expiresAt: tokenInfo.expiresAt,
+        customer,
       }),
     };
-
   } catch (error) {
-    console.error('Login error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
+      headers,
+      body: JSON.stringify({
+        error: 'Internal Server Error',
+        message: error.message,
+        stack: error.stack,
+      }),
     };
   }
+
+
+
+
 };
 
-console.log('SHOPIFY_STORE_DOMAIN:', process.env.SHOPIFY_STORE_DOMAIN);
-console.log('SHOPIFY_STOREFRONT_TOKEN:', process.env.SHOPIFY_STOREFRONT_TOKEN ? '****' : 'NOT SET');
+
+
+
