@@ -1,5 +1,3 @@
-// netlify/functions/login.js
-
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
 
@@ -47,8 +45,7 @@ export async function handler(event) {
 
     const endpoint = `https://${shopifyDomain}/api/${apiVersion}/graphql.json`;
 
-    // Shopify 登录认证请求
-    const query = `
+    const loginQuery = `
       mutation customerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
         customerAccessTokenCreate(input: $input) {
           customerAccessToken {
@@ -63,27 +60,24 @@ export async function handler(event) {
       }
     `;
 
-    const response = await fetch(endpoint, {
+    const loginResponse = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Shopify-Storefront-Access-Token': storefrontToken,
       },
       body: JSON.stringify({
-        query,
+        query: loginQuery,
         variables: {
-          input: {
-            email,
-            password,
-          },
+          input: { email, password },
         },
       }),
     });
 
-    const result = await response.json();
+    const loginResult = await loginResponse.json();
 
-    const errors = result.data.customerAccessTokenCreate.customerUserErrors;
-    const tokenInfo = result.data.customerAccessTokenCreate.customerAccessToken;
+    const errors = loginResult.data.customerAccessTokenCreate.customerUserErrors;
+    const tokenInfo = loginResult.data.customerAccessTokenCreate.customerAccessToken;
 
     if (errors.length > 0 || !tokenInfo) {
       return {
@@ -93,7 +87,7 @@ export async function handler(event) {
       };
     }
 
-    // 查询客户信息，方便放进 JWT 载荷
+    // 获取用户信息
     const customerQuery = `
       {
         customer(customerAccessToken: "${tokenInfo.accessToken}") {
@@ -105,7 +99,7 @@ export async function handler(event) {
       }
     `;
 
-    const customerResponse = await fetch(endpoint, {
+    const customerRes = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -114,8 +108,8 @@ export async function handler(event) {
       body: JSON.stringify({ query: customerQuery }),
     });
 
-    const customerResult = await customerResponse.json();
-    const customer = customerResult.data?.customer;
+    const customerData = await customerRes.json();
+    const customer = customerData.data?.customer;
 
     if (!customer) {
       return {
@@ -125,7 +119,7 @@ export async function handler(event) {
       };
     }
 
-    // 生成自己的 JWT，载荷可以根据需要调整
+    // 生成 JWT
     const payload = {
       id: customer.id,
       email: customer.email,
@@ -140,8 +134,8 @@ export async function handler(event) {
       headers,
       body: JSON.stringify({
         message: 'Login successful',
-        token: jwtToken,          // 返回自己的 JWT
-        expiresIn: 7 * 24 * 3600, // 7天秒数
+        token: jwtToken,
+        expiresIn: 7 * 24 * 3600,
         customer,
       }),
     };
@@ -157,4 +151,9 @@ export async function handler(event) {
       }),
     };
   }
-} 
+
+
+ 
+
+
+}

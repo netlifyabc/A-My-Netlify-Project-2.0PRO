@@ -1,10 +1,8 @@
-// netlify/functions/register.js
-
-import jwt from 'jsonwebtoken'; // Netlify Functions 支持 ESM，需要用这种写法
+import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
 
 const ALLOWED_ORIGIN = 'https://netlifyabc.github.io';
-const JWT_SECRET = process.env.JWT_SECRET; // 必须设置
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function handler(event) {
   const headers = {
@@ -14,7 +12,6 @@ export async function handler(event) {
     'Content-Type': 'application/json',
   };
 
-  // 预检请求直接返回
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -98,8 +95,6 @@ export async function handler(event) {
       };
     }
 
-    // 这里生成 JWT
-    // 你可以根据需求选择 payload 内容，我这只放了客户 id 和 email
     const payload = {
       id: customer.id,
       email: customer.email,
@@ -108,7 +103,7 @@ export async function handler(event) {
     };
 
     const token = jwt.sign(payload, JWT_SECRET, {
-      expiresIn: '7d', // token 有效期，7 天
+      expiresIn: '7d',
     });
 
     return {
@@ -117,7 +112,7 @@ export async function handler(event) {
       body: JSON.stringify({
         message: 'Customer created successfully',
         customer,
-        token,        // 把 JWT 返回给前端，后续调用接口带上它
+        token,
       }),
     };
   } catch (error) {
@@ -131,6 +126,10 @@ export async function handler(event) {
         stack: error.stack,
       }),
     };
-
   }
-} 
+}
+
+
+
+
+
