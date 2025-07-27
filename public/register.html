@@ -1316,10 +1316,13 @@ document.addEventListener('DOMContentLoaded', () => {
           showMessage((isRegisterMode ? '注册' : '登录') + '失败: ' + (result.error || JSON.stringify(result)), true);
         }
       } else {
-        if (isRegisterMode) {
+
+         if (isRegisterMode) {
           showMessage('注册成功! ' + result.message, false);
           currentUserEmail = data.email;
           showVerifyRegisterNotice();
+
+
           // 切换到登录模式
           isRegisterMode = false;
           updateAuthFormUI();
