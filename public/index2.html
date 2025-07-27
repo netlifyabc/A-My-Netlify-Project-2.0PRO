@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- ① Meta & Title & Bootstrap 引入 -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bijander 35” Velvet Task Chair - Product Page</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- ① CSS 样式 -->
+  <style>
+    /* Reset & Base */
+ /* Reset & Base */
+body {
+  background: #f8f9fa; /* 更亮的浅灰，接近 Wayfair 背景 */
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #222;
+}
+
+/* Breadcrumb */
+.breadcrumb a {
+  color: #6c757d;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.breadcrumb a:hover {
+  color: #3f51b5; /* Wayfair 蓝紫色 */
+  text-decoration: underline;
+}
+
+/* 产品画廊 */
+.product-gallery {
+  position: relative;
+}
+
+.main-img {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  max-height: 500px;
+  box-shadow: 0 6px 18px rgba(63, 81, 181, 0.15); /* 蓝紫色投影 */
+  cursor: zoom-in;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-img:hover {
+  transform: scale(1.04);
+}
+
+.thumbs {
+  margin-top: 16px;
+  display: flex;
+  gap: 14px;
+  justify-content: start;
+}
+
+.thumbs img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2.5px solid transparent;
+  box-shadow: 0 3px 8px rgba(63, 81, 181, 0.12);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.thumbs img.active {
+  border-color: #3f51b5;
+  box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3);
+}
+
+/* 产品信息 */
+.product-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #2c2c2c;
+  line-height: 1.1;
+}
+
+.product-sub {
+  color: #666;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+}
+
+.rating {
+  color: #fbc02d; /* 金黄色星星 */
+  font-size: 1.3rem;
+  user-select: none;
+}
+
+.rating~span {
+  margin-left: 10px;
+  color: #999;
+  font-size: 1rem;
+  user-select: none;
+}
+
+/* 价格 */
+.price {
+  font-size: 2.3rem;
+  font-weight: 800;
+  color: #673ab7; /* 深紫色 */
+  margin-top: 16px;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* 变体标签 */
+.variant-label {
+  font-weight: 600;
+  margin-top: 28px;
+  display: block;
+  font-size: 1.15rem;
+  color: #444;
+  letter-spacing: 0.015em;
+}
+
+/* 按钮 */
+.btn-primary {
+  background-color: #673ab7;
+  border: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 14px 0;
+  border-radius: 8px;
+  box-shadow: 0 6px 15px rgba(103, 58, 183, 0.35);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #512da8;
+  box-shadow: 0 8px 22px rgba(81, 45, 168, 0.45);
+}
+
+.btn-outline-secondary {
+  font-weight: 600;
+  color: #673ab7;
+  border: 2px solid #673ab7;
+  padding: 12px 0;
+  font-size: 1.05rem;
+  border-radius: 8px;
+  background: transparent;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #673ab7;
+  color: #fff;
+}
+
+/* 详情区域 */
+.details-section {
+  background: #fff;
+  padding: 40px 32px;
+  border-radius: 12px;
+  margin-top: 48px;
+  box-shadow: 0 6px 24px rgba(103, 58, 183, 0.08);
+  color: #444;
+}
+
+.details-section h4 {
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  font-size: 1.5rem;
+  border-bottom: 3px solid #e0e0e0;
+  padding-bottom: 10px;
+  color: #2c2c2c;
+}
+
+.specs dt {
+  font-weight: 700;
+  margin-top: 14px;
+  color: #555;
+  font-size: 1.05rem;
+}
+
+.specs dd {
+  margin-left: 0;
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+/* 评价 */
+.reviews .review {
+  border-bottom: 1px solid #eee;
+  padding: 20px 0;
+  color: #444;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.reviews .review strong {
+  color: #3f51b5;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.reviews .review span.text-muted {
+  font-size: 0.95rem;
+  margin-left: 8px;
+  color: #888;
+}
+
+/* 相关产品 */
+.related .card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.35s ease, transform 0.35s ease;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(63, 81, 181, 0.1);
+}
+
+.related .card:hover {
+  box-shadow: 0 12px 34px rgba(63, 81, 181, 0.25);
+  transform: translateY(-6px);
+}
+
+.related .card img {
+  object-fit: cover;
+  height: 200px;
+  width: 100%;
+  transition: transform 0.35s ease;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.related .card:hover img {
+  transform: scale(1.1);
+}
+
+.related .card-body {
+  padding: 18px 20px;
+}
+
+.related .card-body h6 {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #2c2c2c;
+  margin-bottom: 6px;
+}
+
+.related .card-body p {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* 消息提示 */
+#message {
+  margin-top: 16px;
+  min-height: 26px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.015em;
+}
+
+#message.info {
+  color: #3f51b5;
+}
+
+#message.success {
+  color: #388e3c;
+}
+
+#message.error {
+  color: #d32f2f;
+}
+
+/* 购物车抽屉 保持你原先设计 */
+#cartDrawer {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background: #fff;
+  box-shadow: -6px 0 24px rgba(63, 81, 181, 0.22);
+  border-radius: 12px 0 0 12px;
+  transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#cartDrawer.open {
+  right: 0;
+}
+
+.cart-drawer-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: #222;
+  background-color: #f3f3f9;
+  user-select: none;
+}
+
+.cart-drawer-header span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ececec;
+  border: none;
+  font-size: 1.5rem;
+  color: #555;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.close-btn:hover {
+  background-color: #673ab7;
+  color: #fff;
+}
+
+.cart-drawer-body {
+  flex-grow: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  color: #444;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 价格汇总和底部按钮你原先样式保持，也可以根据需要调整 */
+
+
+    .checkout-hint {
+      font-weight: 600;
+      color: #7A42F4;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+    }
+
+    /* 商品列表 */
+    .cart-item {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .cart-item:last-child {
+      border-bottom: none;
+    }
+
+    .item-image {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .item-details {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .item-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #222;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    .item-variant {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .item-price-qty {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .item-price {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #7A42F4;
+      min-width: 70px;
+    }
+
+    .item-qty {
+      width: 56px;
+      padding: 6px 8px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      outline-offset: 2px;
+      transition: border-color 0.2s ease;
+    }
+
+    .item-qty:focus {
+      border-color: #7A42F4;
+      box-shadow: 0 0 5px rgba(122, 66, 244, 0.6);
+    }
+
+    .item-remove-btn {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: color 0.25s ease;
+    }
+
+    .item-remove-btn:hover {
+      color: #7A42F4;
+    }
+
+    /* 价格汇总 */
+    .cart-summary {
+      margin-top: 28px;
+      border-top: 1px solid #e5e5e5;
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .summary-row.total {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #7A42F4;
+      margin-top: 10px;
+    }
+
+    .small.text-secondary {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    /* 底部按钮 */
+    .cart-drawer-footer {
+      padding: 20px 28px;
+      border-top: 1px solid #e5e5e5;
+      background-color: #fafafa;
+    }
+
+    #drawerCheckout {
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      height: 48px;
+      margin: 0 auto;
+      padding: 0;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #8E57F4, #6B32C9);
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 48px;
+      text-decoration: none;
+      box-shadow:
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+        0 4px 12px rgba(107, 50, 201, 0.4);
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.3s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #drawerCheckout:hover {
+      background: linear-gradient(135deg, #A176F7, #7E4EF2);
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+        0 8px 20px rgba(107, 50, 201, 0.5);
+    }
+
+    #drawerCheckout:active {
+      transform: translateY(0);
+      box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        0 2px 8px rgba(107, 50, 201, 0.4);
+    }
+
+    /* 自定义滚动条 */
+    #cartDrawer::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #cartDrawer::-webkit-scrollbar-track {
+      background: #f9f9f9;
+      border-radius: 10px;
+    }
+
+    #cartDrawer::-webkit-scrollbar-thumb {
+      background: #7A42F4;
+      border-radius: 10px;
+    }
+
+    #cartDrawer::-webkit-scrollbar-thumb:hover {
+      background: #5E2DB1;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-4">
+    <!-- Breadcrumb 面包屑导航 -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb bg-transparent p-0 mb-0">
+        <li class="breadcrumb-item"><a href="#">Furniture</a></li>
+        <li class="breadcrumb-item"><a href="#">Office Chairs</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Bijander 35” Velvet Task Chair</li>
+      </ol>
+    </nav>
+
+    <div class="row g-5">
+      <!-- 产品画廊 -->
+      <div class="col-md-6">
+        <div class="product-gallery">
+          <!-- 主图，id 与 JS 中 switchImage 函数配合 -->
+          <img src="main1.jpg" alt="Main Image" class="main-img" id="mainImage" />
+          <div class="thumbs mt-2">
+            <!-- 缩略图，点击切换主图 -->
+            <img src="main1.jpg" class="active" onclick="switchImage(this)" alt="Thumbnail 1" />
+            <img src="main2.jpg" onclick="switchImage(this)" alt="Thumbnail 2" />
+            <img src="main3.jpg" onclick="switchImage(this)" alt="Thumbnail 3" />
+            <img src="main4.jpg" onclick="switchImage(this)" alt="Thumbnail 4" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 产品信息 -->
+      <div class="col-md-6">
+        <h1 class="product-title">Bijander 35” Velvet Task Chair</h1>
+        <p class="product-sub">Comfortable velvet + adjustable height for home or office use</p>
+        <div class="d-flex align-items-center mt-2">
+          <div class="rating">★★★★★</div><span>(266 Reviews)</span>
+        </div>
+        <div class="price">$349.00</div>
+
+        <div class="mt-4">
+          <label class="variant-label" for="variantSelect">Color</label>
+          <!-- 下拉选择框，id 与 JS 中 variantSelect 对应 -->
+          <select class="form-select" id="variantSelect">
+            <option value="gid://shopify/ProductVariant/54634094526788">Classic Gray</option>
+            <option value="gid://shopify/ProductVariant/54634094526789">Navy Blue</option>
+            <option value="gid://shopify/ProductVariant/54634094526790">Emerald Green</option>
+          </select>
+        </div>
+
+        <div class="mt-3">
+          <label class="variant-label" for="quantityInput">Quantity</label>
+          <!-- 这里修正id为 quantityInput，匹配JS中的 qtyInput -->
+          <input type="number" id="quantityInput" class="form-control" min="1" value="1" />
+        </div>
+
+        <div class="mt-4 d-flex gap-3">
+          <!-- 添加到购物车按钮，id与JS绑定 -->
+          <button id="addToCartBtn" class="btn btn-primary flex-grow-1">Add to Cart</button>
+          <button id="wishlistBtn" class="btn btn-outline-secondary">Wishlist</button>
+        </div>
+
+        <!-- 显示操作提示信息的容器 -->
+        <div id="message" class="mt-3"></div>
+      </div>
+
+      <!-- 详情区 -->
+      <div class="col-12 mt-5">
+        <div class="details-section">
+          <h4>Product Details</h4>
+          <p>
+            The Bijander 35” Velvet Task Chair combines elegant design with ergonomic support. Featuring smooth velvet upholstery and adjustable height, it suits both home offices and professional settings.
+          </p>
+
+          <dl class="specs row">
+            <dt class="col-sm-3">Material</dt>
+            <dd class="col-sm-9">Velvet fabric, steel frame</dd>
+
+            <dt class="col-sm-3">Dimensions</dt>
+            <dd class="col-sm-9">Width: 28", Depth: 30", Height: 35"</dd>
+
+            <dt class="col-sm-3">Weight Capacity</dt>
+            <dd class="col-sm-9">Up to 250 lbs</dd>
+
+            <dt class="col-sm-3">Color Options</dt>
+            <dd class="col-sm-9">Classic Gray, Navy Blue, Emerald Green</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- 评价区 -->
+      <div class="col-12 mt-5 reviews">
+        <h4>Customer Reviews (266)</h4>
+        <div class="review border-bottom py-3">
+          <strong>Jane D.</strong> <span class="text-muted">– 5 stars</span>
+          <p>Very comfortable and stylish. Perfect for my home office!</p>
+        </div>
+        <div class="review border-bottom py-3">
+          <strong>Mark S.</strong> <span class="text-muted">– 4 stars</span>
+          <p>Good chair for the price, adjustable height is a plus.</p>
+        </div>
+        <div class="review py-3">
+          <strong>Lisa K.</strong> <span class="text-muted">– 5 stars</span>
+          <p>Love the velvet texture and color options!</p>
+        </div>
+      </div>
+
+      <!-- 相关产品 -->
+      <div class="col-12 mt-5 related">
+        <h4>Related Products</h4>
+        <div class="row g-3">
+          <div class="col-md-3 col-6">
+            <div class="card" onclick="location.href='#'">
+              <img src="related1.jpg" alt="Related Product 1" />
+              <div class="card-body">
+                <h6 class="mb-1">Lanna Adjustable Desk</h6>
+                <p class="text-muted">$199.00</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card" onclick="location.href='#'">
+              <img src="related2.jpg" alt="Related Product 2" />
+              <div class="card-body">
+                <h6 class="mb-1">Ergo Lumbar Support</h6>
+                <p class="text-muted">$89.00</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card" onclick="location.href='#'">
+              <img src="related3.jpg" alt="Related Product 3" />
+              <div class="card-body">
+                <h6 class="mb-1">Desk Organizer Set</h6>
+                <p class="text-muted">$49.00</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="card" onclick="location.href='#'">
+              <img src="related4.jpg" alt="Related Product 4" />
+              <div class="card-body">
+                <h6 class="mb-1">Adjustable LED Lamp</h6>
+                <p class="text-muted">$59.00</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 购物车抽屉区域 -->
+  <!-- 注意：id 与 JS 中对应，隐藏时 aria-hidden=true，显示时 JS 会切换为 false -->
+  <div id="cartDrawer" class="cart-drawer" aria-hidden="true" 
+       style="display:none; position: fixed; top:0; right:0; width: 320px; height: 100vh; background: #fff; box-shadow: -4px 0 8px rgba(0,0,0,0.1); padding: 20px; overflow-y: auto; z-index: 1050;">
+    <!-- 关闭按钮 -->
+    <button id="closeDrawer" aria-label="Close cart drawer" 
+            style="background:none; border:none; font-size: 24px; position: absolute; top: 10px; right: 10px; cursor:pointer;">
+      &times;
+    </button>
+
+    <h4>Your Cart</h4>
+
+    <!-- 购物车商品列表容器，JS渲染内容 -->
+    <div id="drawerCartItems" style="margin-top: 30px;"></div>
+
+    <!-- 结账链接按钮，JS动态设置 href -->
+    <a href="#" id="drawerCheckout" class="btn btn-primary mt-3 w-100" target="_blank" rel="noopener">Checkout</a>
+  </div>
+</body>
+
+
+<!-- ====================== -->
+<!-- ③ JavaScript 脚本区域 -->
+<!-- ====================== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // ③-1 图片切换功能：点击缩略图切换主图并高亮当前缩略图
+  function switchImage(el) {
+    const mainImage = document.getElementById('mainImage');
+    if (!mainImage) return;
+    mainImage.src = el.src;
+
+    // 移除所有缩略图的 active 类，再给当前点击的缩略图添加 active
+    document.querySelectorAll('.thumbs img').forEach(img => img.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ③-2 缓存常用 DOM 元素，避免重复查询
+  const addToCartBtn = document.getElementById('addToCartBtn');
+  const variantSelect = document.getElementById('variantSelect');
+  const quantityInput = document.getElementById('quantityInput'); // 修正这里的ID，页面中input的ID是quantityInput
+  const messageEl = document.getElementById('message');
+
+  // 以下是购物车抽屉相关元素，页面必须存在对应id的元素才有效
+  const drawer = document.getElementById('cartDrawer');
+  const drawerItems = document.getElementById('drawerCartItems');
+  const drawerCheckout = document.getElementById('drawerCheckout');
+  const closeDrawer = document.getElementById('closeDrawer');
+
+  // ③-3 消息自动清除定时器句柄，避免消息重复叠加
+  let clearMsgTimeout = null;
+
+  // ③-4 消息显示函数：支持 success、error、info 类型，自动清除消息
+  function showMessage(text, type = 'success', duration = 4000) {
+    const colors = {
+      success: '#28a745',  // 绿色
+      error: '#dc3545',    // 红色
+      info: '#0d6efd'      // 蓝色
+    };
+
+    // 清除之前的定时器，避免消息闪烁
+    if (clearMsgTimeout) {
+      clearTimeout(clearMsgTimeout);
+      clearMsgTimeout = null;
+    }
+
+    messageEl.textContent = text;
+    messageEl.style.color = colors[type] || '#000';
+
+    // success 和 error 类型消息，自动隐藏
+    if (type === 'success' || type === 'error') {
+      clearMsgTimeout = setTimeout(() => {
+        messageEl.textContent = '';
+        clearMsgTimeout = null;
+      }, duration);
+    }
+  }
+
+  // ③-5 渲染购物车抽屉内容，包括商品信息和价格汇总
+  function renderCart(cart) {
+    if (!cart) return;
+
+    drawerItems.innerHTML = ''; // 先清空旧内容
+
+    // 遍历购物车中的商品条目
+    if (cart.lines && cart.lines.edges && cart.lines.edges.length > 0) {
+      cart.lines.edges.forEach(({ node }) => {
+        const variantId = node.merchandise.id;
+        const quantity = node.quantity;
+
+        // 通过variantSelect下的<option>找到对应的商品描述文本（如颜色）
+        const optionEl = Array.from(variantSelect.options).find(opt => opt.value === variantId);
+        const colorLabel = optionEl ? optionEl.textContent : 'Selected Variant';
+
+        const item = document.createElement('div');
+        item.style.marginBottom = '10px';
+        item.innerHTML = `
+          <div style="font-weight: bold;">Color: ${colorLabel}</div>
+          <div style="font-size: 14px; color: #555;">Quantity: ${quantity}</div>
+        `;
+        drawerItems.appendChild(item);
+      });
+    } else {
+      drawerItems.innerHTML = '<p>购物车为空。</p>';
+    }
+
+    // 渲染价格汇总，cart.cost 必须存在且结构正确
+    if (cart.cost) {
+      const subtotal = cart.cost.subtotalAmount?.amount || '0.00';
+      const total = cart.cost.totalAmount?.amount || '0.00';
+
+      // 移除已有汇总，避免重复渲染
+      const oldSummary = drawerItems.querySelector('.cart-summary');
+      if (oldSummary) oldSummary.remove();
+
+      const summary = document.createElement('div');
+      summary.className = 'cart-summary mt-3';
+      summary.innerHTML = `
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>$${subtotal}</span>
+        </div>
+        <div class="summary-row">
+          <span>Shipping</span>
+          <span>Free</span>
+        </div>
+        <div class="summary-row total">
+          <span>Total</span>
+          <span>$${total}</span>
+        </div>
+      `;
+      drawerItems.appendChild(summary);
+    }
+
+    // 设置结账链接，若无则为 #
+    drawerCheckout.href = cart.checkoutUrl || '#';
+
+    // 显示购物车抽屉，设置无障碍属性 aria-hidden
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+  }
+
+  // ③-6 “添加到购物车”按钮点击事件，调用后端接口添加商品
+  addToCartBtn.addEventListener('click', async () => {
+    const merchandiseId = variantSelect.value;
+    const quantityRaw = parseInt(quantityInput.value, 10); // 修正变量名
+    const quantity = (!isNaN(quantityRaw) && quantityRaw > 0) ? quantityRaw : 1;
+
+    showMessage('⏳ 正在添加到购物车，请稍候...', 'info');
+    addToCartBtn.disabled = true; // 防止重复点击
+
+    try {
+      const response = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/add-to-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchandiseId, quantity })
+      });
+
+      if (!response.ok) {
+        // 解析错误信息，如果失败就用默认错误提示
+        const errData = await response.json().catch(() => ({}));
+        showMessage('❌ 添加失败: ' + (errData.error || '未知错误'), 'error');
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data.cart) {
+        showMessage('❌ 响应缺少购物车数据', 'error');
+        return;
+      }
+
+      // 渲染购物车内容并显示成功消息
+        
+      if (data.cart.checkoutUrl) {
+  window.location.href = data.cart.checkoutUrl; // 自动跳转结账页面
+} else {
+  showMessage('✅ 已成功加入购物车！', 'success', 2000);
+  renderCart(data.cart); // 可选保留抽屉
+}
+
+
+    } catch (error) {
+      console.error(error);
+      showMessage('❌ 网络错误，请稍后重试', 'error');
+    } finally {
+      addToCartBtn.disabled = false; // 恢复按钮可用
+    }
+  });
+
+  // ③-7 关闭购物车抽屉按钮事件
+  closeDrawer.addEventListener('click', () => {
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+  });
+</script> 
+
+
+
+
+
+
+
+</body>
+</html> 

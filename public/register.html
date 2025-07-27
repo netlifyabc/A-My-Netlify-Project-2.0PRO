@@ -675,56 +675,262 @@
 }
 
 
-    /* ======================
-       ⑤ 爆款推荐 Products Grid
-       ====================== */
-    .section {
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 2rem;
-    }
-    .section-title {
-      font-size: 2rem;
-      color: #7F187F;
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.5rem;
-    }
-    .product-card {
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      transition: box-shadow 0.3s ease;
-    }
-    .product-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .product-card img {
-      width: 100%;
-      height: 200px;
-      object-fit: contain;
-      background: #f5f5f5;
-    }
-    .product-info {
-      padding: 1rem;
-    }
-    .product-title {
-      font-size: 1rem;
-      font-weight: 600;
-      height: 2.4em;
-      overflow: hidden;
-      margin-bottom: 0.5rem;
-    }
-    .product-price {
-      color: #F8CF1C;
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
+/* ======================
+   ⑤ 爆款推荐 Products Grid（双图切换版）
+   ====================== */
+.section.hot-products {
+  max-width: 1200px;
+  margin: 5rem auto;
+  padding: 0 2rem;
+}
+.section-title {
+  font-size: 2.2rem;
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 1px;
+  margin-bottom: 3rem;
+  position: relative;
+}
+.section-title::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 3px;
+  background-color: #7F187F;
+  margin: 1rem auto 0;
+  border-radius: 2px;
+}
+
+/* Grid layout */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  justify-content: center;
+}
+
+/* Product card */
+.product-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.3s ease;
+}
+.product-card:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+  transform: none !important;
+}
+
+/* 图片链接 */
+.product-image-link {
+  display: block;
+  cursor: pointer;
+  outline-offset: 4px;
+  position: relative;
+  padding-top: 65%; /* 比例控制，调整为合适高度 */
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
+}
+.product-image-link:focus-visible {
+  outline: 2px solid #7F187F;
+  outline-offset: 3px;
+}
+
+/* 双图叠放 */
+.product-image-link img {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 16px 16px 0 0;
+  transition: opacity 0.4s ease;
+}
+
+/* 主图 */
+.product-image-link img.img-top {
+  opacity: 1;
+  z-index: 2;
+}
+
+/* 悬浮隐藏主图 */
+.product-image-link:hover img.img-top {
+  opacity: 0;
+}
+
+/* 悬浮显示第二图 */
+.product-image-link img.img-hover {
+  opacity: 0;
+  z-index: 1;
+}
+.product-image-link:hover img.img-hover {
+  opacity: 1;
+  z-index: 3;
+}
+
+/* Badge */
+.product-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #F8CF1C;
+  color: #111;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
+  z-index: 4;
+}
+
+/* Info area */
+.product-info {
+  padding: 1.25rem 1.5rem 1.5rem;
+  border-radius: 0 0 16px 16px;
+  background: #fff;
+}
+
+/* 标题链接 */
+.product-title-link {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #222;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+  line-height: 1.4;
+  max-height: 2.8em;
+  overflow: hidden;
+  transition: text-decoration 0.25s ease;
+}
+.product-title-link:hover,
+.product-title-link:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+.product-title-link:focus-visible {
+  outline: 2px solid #7F187F;
+  outline-offset: 2px;
+}
+
+/* 价格 */
+.product-price {
+  font-size: 1.25rem;
+  color: #7F187F;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+@media (max-width: 600px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .product-card {
+    border-radius: 12px;
+  }
+  .product-title-link {
+    font-size: 1rem;
+  }
+  .product-price {
+    font-size: 1.1rem;
+  }
+  .product-image-link {
+    padding-top: 70%;
+    border-radius: 12px 12px 0 0;
+  }
+}
+
+
+/* Badge */
+.product-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #F8CF1C;
+  color: #111;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  opacity: 0.95;
+}
+
+/* Info area */
+.product-info {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+/* 标题链接 */
+.product-title-link {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #222;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+  line-height: 1.4;
+  max-height: 2.8em;
+  overflow: hidden;
+  transition: text-decoration 0.25s ease;
+}
+.product-title-link:hover,
+.product-title-link:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+.product-title-link:focus-visible {
+  outline: 2px solid #7F187F;
+  outline-offset: 2px;
+}
+
+/* 价格 */
+.product-price {
+  font-size: 1.25rem;
+  color: #7F187F;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+/* Responsive tune */
+@media (max-width: 960px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .product-card {
+    border-radius: 12px;
+  }
+  .product-title-link {
+    font-size: 1rem;
+  }
+  .product-price {
+    font-size: 1.1rem;
+  }
+  .product-image {
+    height: 200px;
+  }
+}
+
 
     /* ======================
        ⑥ 品牌故事 Brand Story
@@ -1040,40 +1246,49 @@
 
 
 
-  <!-- ⑤ 爆款推荐 Products Grid -->
-  <section class="section">
-    <h2 class="section-title">爆款推荐</h2>
-    <div class="products-grid">
-      <div class="product-card">
-        <img src="https://images.unsplash.com/photo-1623117308451-f8caa4a46e91?auto=format&fit=crop&w=400&q=60" alt="沙发"/>
-        <div class="product-info">
-          <div class="product-title">现代简约双人沙发</div>
-          <div class="product-price">￥1,599</div>
-        </div>
-      </div>
-      <div class="product-card">
-        <img src="https://images.unsplash.com/photo-1602524813011-2aa30c9cb9d1?auto=format&fit=crop&w=400&q=60" alt="吊灯"/>
-        <div class="product-info">
-          <div class="product-title">北欧风格吊灯</div>
-          <div class="product-price">￥499</div>
-        </div>
-      </div>
-      <div class="product-card">
-        <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=60" alt="地毯"/>
-        <div class="product-info">
-          <div class="product-title">柔软手工编织地毯</div>
-          <div class="product-price">￥899</div>
-        </div>
-      </div>
-      <div class="product-card">
-        <img src="https://images.unsplash.com/photo-1595526114035-d157efd85f4e?auto=format&fit=crop&w=400&q=60" alt="储物柜"/>
-        <div class="product-info">
-          <div class="product-title">多功能储物柜</div>
-          <div class="product-price">￥699</div>
-        </div>
+<!-- ⑤ 爆款推荐 Products Grid（深化设计版） -->  
+
+<section class="section hot-products">
+  <h2 class="section-title">爆款推荐</h2>
+  <div class="products-grid">
+
+    <div class="product-card">
+      <a href="/product/sofa-modern" class="product-image-link" aria-label="查看现代简约双人沙发详情">
+        <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=400&q=60" alt="现代简约双人沙发" class="img-top" loading="lazy" />
+        <img src="https://images.unsplash.com/photo-1578898886541-4e9c03c1e40f?auto=format&fit=crop&w=400&q=60" alt="现代简约双人沙发侧面" class="img-hover" loading="lazy" />
+        <span class="product-badge">热销</span>
+      </a>
+      <div class="product-info">
+        <a href="/product/sofa-modern" class="product-title-link">现代简约双人沙发</a>
+        <div class="product-price">￥1,599</div>
       </div>
     </div>
-  </section>
+
+    <div class="product-card">
+      <a href="/product/scandinavian-lamp" class="product-image-link" aria-label="查看北欧风格吊灯详情">
+        <img src="https://images.unsplash.com/photo-1602524813011-2aa30c9cb9d1?auto=format&fit=crop&w=400&q=60" alt="北欧风格吊灯" class="img-top" loading="lazy" />
+        <img src="https://images.unsplash.com/photo-1602524855682-c3aa964a4a41?auto=format&fit=crop&w=400&q=60" alt="北欧风格吊灯细节" class="img-hover" loading="lazy" />
+      </a>
+      <div class="product-info">
+        <a href="/product/scandinavian-lamp" class="product-title-link">北欧风格吊灯</a>
+        <div class="product-price">￥499</div>
+      </div>
+    </div>
+
+    <div class="product-card">
+      <a href="/product/handwoven-rug" class="product-image-link" aria-label="查看柔软手工编织地毯详情">
+        <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=60" alt="柔软手工编织地毯" class="img-top" loading="lazy" />
+        <img src="https://images.unsplash.com/photo-1586023511014-2c3e2f59d8bb?auto=format&fit=crop&w=400&q=60" alt="柔软手工编织地毯纹理" class="img-hover" loading="lazy" />
+      </a>
+      <div class="product-info">
+        <a href="/product/handwoven-rug" class="product-title-link">柔软手工编织地毯</a>
+        <div class="product-price">￥899</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
 
   <!-- ⑥ 品牌故事 Brand Story -->
   <section class="brand-story">
