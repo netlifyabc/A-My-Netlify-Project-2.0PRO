@@ -835,7 +835,6 @@
       </button>
     </div>
 
-
 <!-- 右侧操作区 -->
 <div class="action-icons">
   <a href="#" class="btn-signin">
@@ -843,14 +842,13 @@
     <svg class="icon-user" width="20" height="20" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 12a5 5 0 10-5-5 5 5 0 005 5zm0 2c-4.091 0-8 2.045-8 4.5V21h16v-2.5c0-2.455-3.909-4.5-8-4.5z"/>
     </svg>
-  <span id="signInText">Sign In</span> 
+    <span id="signInText">Sign In</span> 
   </a>
 
-   <a href="/orders" id="btnMyOrders" class="btn-inline" style="display: none;">我的订单</a> 
+  <a href="/orders" id="btnMyOrders" class="btn-inline" style="display: none;">我的订单</a> 
 
+  <a href="#" id="btnSignOut" class="btn-inline" style="display: none;">Sign Out</a>
 
-   <a href="#" id="btnSignOut" class="btn-inline" style="display: none;">Sign Out</a>
- 
   <a href="#" class="btn-cart">
     <!-- 购物车图标 -->
     <svg class="icon-cart" width="22" height="22" viewBox="0 0 576 512">
@@ -880,12 +878,23 @@
       <button type="submit" id="authSubmitBtn">Sign In</button>
     </form>
 
+    <!-- 注册成功，提示验证邮件和重发 -->
+    <p id="verifyNotice" style="display:none; color: green; margin-top: 1rem;">
+      注册成功！请查收验证邮件完成激活。<br />
+      未收到邮件？<a href="#" id="btnResendVerification">点击重发</a>
+    </p>
+
+    <!-- 登录时未验证邮箱提示 -->
+    <p id="verifyNoticeLogin" style="display:none; color: orange; margin-top: 1rem;">
+      您的邮箱尚未验证，请先验证邮箱。<br />
+      <a href="#" id="btnResendVerificationLogin">重新发送验证邮件</a>
+    </p>
+
     <p id="authToggleText">Don't have an account?
       <a href="#" id="toggleAuthMode">Register here</a>
     </p>
   </div>
 </div>
-
 
 
   <!-- ③ Banner 横幅 -->
@@ -1144,8 +1153,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-
-
 document.addEventListener('DOMContentLoaded', () => {
   const authModal = document.getElementById('authModal');
   const closeAuthBtn = document.getElementById('closeAuth');
@@ -1158,7 +1165,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const signInBtn = document.querySelector('.btn-signin');
   const signInText = document.getElementById('signInText');
   const signOutBtn = document.getElementById('btnSignOut');
-  const btnMyOrders = document.getElementById('btnMyOrders');  // 新增这一行
+  const btnMyOrders = document.getElementById('btnMyOrders');
+
+  const verifyNotice = document.getElementById('verifyNotice');
+  const btnResendVerification = document.getElementById('btnResendVerification');
+  const verifyNoticeLogin = document.getElementById('verifyNoticeLogin');
+  const btnResendVerificationLogin = document.getElementById('btnResendVerificationLogin');
 
   // 创建消息提示区
   const messageDiv = document.createElement('div');
@@ -1168,6 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
   authForm.appendChild(messageDiv);
 
   let isRegisterMode = false;
+  let currentUserEmail = null; // 用于重发邮件时传递
 
   // 页面加载：显示欢迎信息（若有合法登录状态）
   const savedName = localStorage.getItem('customerName');
@@ -1175,30 +1188,38 @@ document.addEventListener('DOMContentLoaded', () => {
     updateWelcomeUI(savedName);
   }
 
-  // 显示登录弹窗
+  // 打开登录/注册弹窗
   signInBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    resetAllNotices();
     authModal.style.display = 'block';
     isRegisterMode = false;
     updateAuthFormUI();
   });
 
   // 关闭弹窗
-  if (closeAuthBtn) {
-    closeAuthBtn.addEventListener('click', () => {
-      authModal.style.display = 'none';
-      resetForm();
-    });
-  }
+  closeAuthBtn?.addEventListener('click', () => {
+    authModal.style.display = 'none';
+    resetForm();
+    resetAllNotices();
+  });
 
-  // 切换注册 / 登录模式
+  // 切换注册/登录模式
   toggleAuthMode.addEventListener('click', (e) => {
     e.preventDefault();
+    resetAllNotices();
     isRegisterMode = !isRegisterMode;
     updateAuthFormUI();
   });
 
-  // 更新注册/登录界面内容
+  function resetAllNotices() {
+    messageDiv.style.display = 'none';
+    verifyNotice.style.display = 'none';
+    verifyNoticeLogin.style.display = 'none';
+    currentUserEmail = null;
+  }
+
+  // 更新表单 UI
   function updateAuthFormUI() {
     if (isRegisterMode) {
       authTitle.textContent = 'Register';
@@ -1212,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
       authToggleText.innerHTML = `Don't have an account? <a href="#" id="toggleAuthModeLink">Register here</a>`;
     }
 
-    // 绑定切换事件（防止 HTML 被覆盖丢失事件）
+    // 重新绑定切换事件
     const newToggle = document.getElementById('toggleAuthModeLink');
     if (newToggle) {
       newToggle.addEventListener('click', (event) => {
@@ -1221,7 +1242,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    messageDiv.style.display = 'none';
     authForm.reset();
   }
 
@@ -1235,38 +1255,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 更新欢迎界面（登录后）
+  // 更新登录后欢迎 UI
   function updateWelcomeUI(name) {
-    if (signInText) {
-      signInText.textContent = `👋 欢迎, ${name}`;
-    }
-    if (signOutBtn) {
-      signOutBtn.style.display = 'inline';
-    }
-    if (btnMyOrders) {
-      btnMyOrders.style.display = 'inline-block';
-    }
+    if (signInText) signInText.textContent = `👋 欢迎, ${name}`;
+    if (signOutBtn) signOutBtn.style.display = 'inline';
+    if (btnMyOrders) btnMyOrders.style.display = 'inline-block';
   }
 
-  // 恢复未登录状态界面
+  // 恢复未登录状态 UI
   function resetWelcomeUI() {
-    if (signInText) {
-      signInText.textContent = 'Sign In';
-    }
-    if (signOutBtn) {
-      signOutBtn.style.display = 'none';
-    }
-    if (btnMyOrders) {
-      btnMyOrders.style.display = 'none';
-    }
-    localStorage.removeItem('jwtToken');  // 登出时也清除 token
+    if (signInText) signInText.textContent = 'Sign In';
+    if (signOutBtn) signOutBtn.style.display = 'none';
+    if (btnMyOrders) btnMyOrders.style.display = 'none';
+    localStorage.removeItem('jwtToken');
   }
 
   // 表单提交逻辑
   authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    messageDiv.style.display = 'none';
-    messageDiv.className = 'result';
+    resetAllNotices();
 
     const url = isRegisterMode
       ? 'https://my-netlify-pro.netlify.app/.netlify/functions/register'
@@ -1285,9 +1292,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
     if (isRegisterMode && (!data.firstName || !data.lastName)) {
-      messageDiv.textContent = 'First Name and Last Name are required.';
-      messageDiv.classList.add('error');
-      messageDiv.style.display = 'block';
+      showMessage('First Name and Last Name are required.', true);
       return;
     }
 
@@ -1302,88 +1307,149 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!response.ok) {
         localStorage.removeItem('customerName');
-        localStorage.removeItem('jwtToken');  // 登录失败清除 token
-        messageDiv.textContent = (isRegisterMode ? '注册' : '登录') + '失败: ' + (result.error || JSON.stringify(result));
-        messageDiv.classList.add('error');
+        localStorage.removeItem('jwtToken');
+        // 登录失败，判断是否是邮箱未验证错误（假设后端返回 error: 'email_not_verified'）
+        if (result.error === 'email_not_verified') {
+          currentUserEmail = data.email;
+          showVerifyLoginNotice();
+        } else {
+          showMessage((isRegisterMode ? '注册' : '登录') + '失败: ' + (result.error || JSON.stringify(result)), true);
+        }
       } else {
         if (isRegisterMode) {
-          messageDiv.textContent = '注册成功! ' + result.message;
+          showMessage('注册成功! ' + result.message, false);
+          currentUserEmail = data.email;
+          showVerifyRegisterNotice();
+          // 切换到登录模式
           isRegisterMode = false;
           updateAuthFormUI();
         } else {
           const customerName = result.customer?.firstName?.trim();
-          const jwtToken = result.token;  // 新增：从登录接口返回的 token
+          const jwtToken = result.token;
 
           if (customerName && jwtToken) {
             localStorage.setItem('customerName', customerName);
-            localStorage.setItem('jwtToken', jwtToken);  // 保存 token
+            localStorage.setItem('jwtToken', jwtToken);
             updateWelcomeUI(customerName);
             messageDiv.textContent = `登录成功! 欢迎您，${customerName}`;
+            messageDiv.classList.remove('error');
+            authModal.style.display = 'none';
           } else {
+            // 登录成功但没有姓名或 token，安全退出
             localStorage.removeItem('customerName');
             localStorage.removeItem('jwtToken');
             resetWelcomeUI();
-            messageDiv.textContent = '登录成功!';
+            showMessage('登录成功! 但无法识别用户信息。', true);
           }
-
-          messageDiv.classList.remove('error');
-          authModal.style.display = 'none';
         }
       }
     } catch (err) {
       localStorage.removeItem('customerName');
       localStorage.removeItem('jwtToken');
-      messageDiv.textContent = '请求失败: ' + err.message;
-      messageDiv.classList.add('error');
+      showMessage('请求失败: ' + err.message, true);
     }
-
-    messageDiv.style.display = 'block';
   });
 
-  // 登出按钮逻辑
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.removeItem('customerName');
-      localStorage.removeItem('jwtToken');  // 登出时清除 token
-      resetWelcomeUI();
-    });
+  // 显示消息
+  function showMessage(msg, isError = false) {
+    messageDiv.textContent = msg;
+    messageDiv.className = isError ? 'result error' : 'result';
+    messageDiv.style.display = 'block';
   }
 
-  // 新增：点击“我的订单”按钮，调用受保护接口示例
-  if (btnMyOrders) {
-    btnMyOrders.addEventListener('click', async () => {
-      const token = localStorage.getItem('jwtToken');
-      if (!token) {
-        alert('请先登录');
-        return;
+  // 显示注册成功后的验证邮件提示
+  function showVerifyRegisterNotice() {
+    verifyNotice.style.display = 'block';
+  }
+
+  // 显示登录后邮箱未验证提示
+  function showVerifyLoginNotice() {
+    verifyNoticeLogin.style.display = 'block';
+  }
+
+  // 重发验证邮件 - 注册场景
+  btnResendVerification?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!currentUserEmail) {
+      alert('未找到邮箱，请重新登录。');
+      return;
+    }
+    await resendVerificationEmail(currentUserEmail);
+  });
+
+  // 重发验证邮件 - 登录场景
+  btnResendVerificationLogin?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!currentUserEmail) {
+      alert('未找到邮箱，请重新登录。');
+      return;
+    }
+    await resendVerificationEmail(currentUserEmail);
+  });
+
+  // 发送重发验证邮件请求
+  async function resendVerificationEmail(email) {
+    try {
+      const response = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('验证邮件已重新发送，请注意查收。');
+      } else {
+        alert('重发失败: ' + (result.error || JSON.stringify(result)));
+      }
+    } catch (err) {
+      alert('请求失败: ' + err.message);
+    }
+  }
+
+  // 登出按钮逻辑
+  signOutBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('customerName');
+    localStorage.removeItem('jwtToken');
+    resetWelcomeUI();
+  });
+
+  // “我的订单”按钮逻辑
+  btnMyOrders?.addEventListener('click', async () => {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+      alert('请先登录');
+      return;
+    }
+
+    try {
+      const response = await fetch('/.netlify/functions/get-orders', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('获取订单失败');
       }
 
-      try {
-        const response = await fetch('/.netlify/functions/get-orders', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('获取订单失败');
-        }
-
-        const orders = await response.json();
-        console.log('订单数据:', orders);
-        alert('成功获取订单，详情请查看控制台');
-        // 你可以在这里把订单数据显示到页面上
-      } catch (error) {
-        alert(error.message);
-      }
-    });
+      const orders = await response.json();
+      console.log('订单数据:', orders);
+      alert('成功获取订单，详情请查看控制台');
+      // 可扩展：将订单数据显示到页面
+   } catch (error) {
+    alert(error.message);
   }
 });
-
+});
 
 </script>
 </body>
 </html> 
+
+
+
+
