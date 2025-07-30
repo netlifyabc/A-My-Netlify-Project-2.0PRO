@@ -10,173 +10,281 @@
     rel="stylesheet"
   />
   <style>
-    :root {
-      --primary-color: #7f187f;
-      --primary-color-hover: #5a115a;
-      --background-color: #faf8fb;
-      --text-color: #2c2c2c;
-      --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      --radius: 10px;
-      --border-color: #ddd;
-    }
 
-    * {
-      box-sizing: border-box;
-    }
+  :root {
+    --primary-color: #7f187f;
+    --primary-color-hover: #5a115a;
+    --background-color: #faf8fb;
+    --text-color: #2c2c2c;
+    --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --radius: 10px;
+    --success-color: #388e3c;
+    --highlight-color: #a060a0; /* 柔和紫色高光 */
+  }
+  * {
+    box-sizing: border-box;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    font-family: "Inter", sans-serif;
+    color: var(--text-color);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #fff;
+    box-shadow: var(--box-shadow);
+    padding: 1.5rem 0;
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    font-weight: 600;
+  }
+  main {
+    margin-top: 6rem;
+    background-color: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--box-shadow);
+    padding: 2.5rem 2rem 3rem;
+    max-width: 480px;
+    width: 90vw;
+    min-height: 320px;
+    outline: none;
+  }
+  h2 {
+    margin-top: 0;
+    font-weight: 600;
+    font-size: 1.6rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    opacity: 0;
+    animation: fadeInUp 0.4s forwards 0.3s;
+  }
+  .order-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    max-height: 350px;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    border-radius: 6px;
+  }
+  
+  .order-item {
+    border-bottom: 1px solid #eee;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(20px);
+    animation-fill-mode: forwards;
+    animation-name: fadeInUp;
+    animation-duration: 0.45s;
+    animation-timing-function: ease-out;
+    animation-delay: var(--delay, 0s);
+  }
 
-    html,
-    body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background-color: var(--background-color);
-      font-family: "Inter", sans-serif;
-      color: var(--text-color);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
+  .order-id {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.6rem;
+    font-size: 1.1rem;
+  }
 
-    header {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      background-color: #fff;
-      box-shadow: var(--box-shadow);
-      padding: 1.5rem 0;
-      z-index: 10;
-    }
+  .order-info {
+    font-size: 1rem;
+    color: #444;
+    margin-bottom: 0.5rem;
+    user-select: none;
+  }
 
-    header h1 {
-      margin: 0;
-      color: var(--primary-color);
-      font-size: 1.8rem;
-      font-weight: 600;
-    }
+  a.btn-primary {
+    display: inline-block;
+    padding: 14px 28px;
+    margin-top: 2rem;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    user-select: none;
+    opacity: 0;
+    animation: fadeInUp 0.4s forwards 0.7s;
+    box-shadow: 0 4px 10px rgba(127, 24, 127, 0.3);
+  }
 
-    main {
-      background-color: #fff;
-      border-radius: var(--radius);
-      box-shadow: var(--box-shadow);
-      padding: 2rem 2rem 3rem;
-      margin-top: 6rem;
-      max-width: 480px;
-      width: 90vw;
-      min-height: 300px;
-    }
+  a.btn-primary:hover,
+  a.btn-primary:focus {
+    background-color: var(--primary-color-hover);
+    outline: none;
+    transform: scale(1.07);
+    box-shadow: 0 6px 14px rgba(90, 17, 90, 0.5);
+  }
 
-    h2 {
-      margin-top: 0;
-      font-weight: 600;
-      font-size: 1.5rem;
-      margin-bottom: 1.5rem;
-      color: var(--primary-color);
-    }
+  /* 段落调整 */
+  p {
+    color: #555;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+  }
 
-    .order-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      text-align: left;
-    }
+  .no-orders {
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #7a5a7a;
+    opacity: 0.9;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    user-select: none;
+    margin: 3rem 0;
+    text-shadow: 0 1px 3px rgba(122, 90, 122, 0.15);
+    line-height: 1.6;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+  }
 
-    .order-item {
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 0;
-    }
+  #loadingMsg {
+    color: #555;
+    margin: 2rem 0;
+    font-size: 1rem;
+    opacity: 0;
+    animation: fadeInUp 0.4s forwards 0.3s;
+    position: relative;
+  }
 
-    .order-item:last-child {
-      border-bottom: none;
-    }
+  /* 加载提示后面动感“点点点” */
+  #loadingMsg::after {
+    content: '';
+    display: inline-block;
+    margin-left: 6px;
+    font-weight: 700;
+    color: var(--primary-color);
+    animation: dotsBounce 1.4s infinite;
+  }
 
-    .order-id {
-      font-weight: 600;
-      color: var(--primary-color);
-      margin-bottom: 0.5rem;
+  @keyframes dotsBounce {
+    0%, 20% {
+      content: '';
     }
+    40% {
+      content: '.';
+    }
+    60% {
+      content: '..';
+    }
+    80%, 100% {
+      content: '...';
+    }
+  }
 
-    .order-date,
-    .order-total,
-    .order-status {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 0.2rem;
-    }
+  footer {
+    margin-top: auto;
+    width: 100%;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #999;
+    padding: 1rem 0;
+    background: transparent;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+  }
 
-    .no-orders {
-      font-size: 1rem;
-      color: #777;
-      margin-top: 3rem;
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
     }
-
-    footer {
-      margin-top: auto;
-      width: 100%;
-      text-align: center;
-      font-size: 0.85rem;
-      color: #999;
-      padding: 1rem 0;
-      background: transparent;
-      position: fixed;
-      bottom: 0;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-
-    a.btn-primary {
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 12px 24px;
-      background-color: var(--primary-color);
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: background-color 0.3s ease, transform 0.2s ease;
-      user-select: none;
-    }
-
-    a.btn-primary:hover,
-    a.btn-primary:focus {
-      background-color: var(--primary-color-hover);
-      outline: none;
-      transform: scale(1.05);
-    }
+  }
   </style>
+
+
 </head>
 <body>
   <header>
     <h1>YourShop</h1>
   </header>
 
-  <main role="main" tabindex="-1">
-    <h2>我的订单</h2>
-    <ul id="orderList" class="order-list" aria-live="polite" aria-relevant="additions removals">
+  <main role="main" tabindex="-1" aria-labelledby="orders-title">
+    <h2 id="orders-title">我的订单</h2>
+
+    <div id="message" role="alert" aria-live="assertive"></div>
+    <p id="loadingMsg" aria-live="polite">加载中，请稍候</p>
+
+    <ul id="orderList" class="order-list" aria-live="polite" aria-relevant="additions removals" tabindex="0">
       <!-- 订单列表动态插入这里 -->
     </ul>
-    <p id="noOrdersMsg" class="no-orders" style="display:none;">您暂无订单，赶快去购物吧！</p>
+
+    <p id="noOrdersMsg" class="no-orders" style="display:none;">您暂无订单，赶快去购物吧！</p> 
+
     <a href="/" class="btn-primary" role="button">返回首页</a>
   </main>
 
   <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer>
 
   <script>
-    // 假设你已经有获取到的订单数据，这里做示例：
-    // 实际中你需要通过 fetch 调用 get-orders API 获取真实订单
+    const API_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
+
+    function showMessage(text, isError = true) {
+      const msg = document.getElementById('message');
+      msg.style.display = 'block';
+      msg.style.color = isError ? 'red' : 'green';
+      msg.textContent = text;
+    }
+
+    function hideMessage() {
+      const msg = document.getElementById('message');
+      msg.style.display = 'none';
+      msg.textContent = '';
+    }
 
     async function fetchOrders() {
       try {
-        // 这里用你的实际 Netlify 函数地址和有效的 customerAccessToken
-        const customerAccessToken = localStorage.getItem('customerAccessToken') || '';
+        const customerAccessToken = localStorage.getItem('jwtToken') || '';
         if (!customerAccessToken) {
-          alert('请先登录');
-          window.location.href = '/login.html';
-          return;
+          // 页面内提示登录，更友好
+          hideMessage();
+          showMessage('您尚未登录，请先登录以查看订单。', true);
+          document.getElementById('loadingMsg').style.display = 'none';
+          document.getElementById('orderList').style.display = 'none';
+          document.getElementById('noOrdersMsg').style.display = 'none';
+          // 显示登录按钮
+          const btn = document.createElement('a');
+          btn.href = '/login.html';
+          btn.textContent = '去登录';
+          btn.className = 'btn-primary';
+          btn.setAttribute('role', 'button');
+          const main = document.querySelector('main');
+          main.appendChild(btn);
+          return [];
         }
 
-        const res = await fetch('/.netlify/functions/get-orders', {
+        const res = await fetch(`${API_BASE}/get-orders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ customerAccessToken }),
@@ -188,13 +296,15 @@
         return data.orders || [];
       } catch (err) {
         console.error(err);
-        alert('获取订单时出错，请稍后重试');
+        showMessage('加载中，请稍候...');
         return [];
       }
     }
 
     function formatDate(isoString) {
+      if (!isoString) return '未知日期';
       const d = new Date(isoString);
+      if (isNaN(d)) return '未知日期';
       return d.toLocaleDateString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
@@ -209,12 +319,14 @@
 
       if (orders.length === 0) {
         noOrdersMsg.style.display = 'block';
+        listEl.style.display = 'none';
         return;
       }
-      noOrdersMsg.style.display = 'none';
 
-      orders.forEach((order) => {
-        // 订单ID可能是 Shopify ID，做个简单截断展示
+      noOrdersMsg.style.display = 'none';
+      listEl.style.display = 'block';
+
+      orders.forEach((order, i) => {
         const shortId = order.id?.slice(-6) || '未知ID';
         const date = formatDate(order.processedAt || order.createdAt || '');
         const total = order.totalPriceV2?.amount
@@ -224,28 +336,27 @@
 
         const li = document.createElement('li');
         li.className = 'order-item';
+        li.style.setProperty('--delay', `${i * 0.15}s`);
         li.innerHTML = `
           <div class="order-id">订单号：${shortId}</div>
-          <div class="order-date">下单日期：${date}</div>
-          <div class="order-total">总金额：${total}</div>
-          <div class="order-status">订单状态：${status}</div>
+          <div class="order-info">下单日期：${date}</div>
+          <div class="order-info">总金额：${total}</div>
+          <div class="order-info">订单状态：${status}</div>
         `;
         listEl.appendChild(li);
       });
     }
 
     (async () => {
+      const loadingMsg = document.getElementById('loadingMsg');
+      loadingMsg.style.display = 'block';
+      hideMessage();
+
       const orders = await fetchOrders();
+
+      loadingMsg.style.display = 'none';
       renderOrders(orders);
     })();
   </script>
 </body>
-
-
-
-
-
-
-
-
 </html> 
