@@ -1,36 +1,46 @@
-// netlify/functions/test-cors.js
-
 export async function handler(event) {
-  const ALLOWED_ORIGINS = [
-    'https://netlifyabc.github.io',   // 你的前端地址
-    'https://my-netlify-pro.netlify.app',
-  ];
-
-  const origin = event.headers.origin || '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
+  const origin = event.headers.origin || '*';
 
   const headers = {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Origin': origin,  // 允许跨域访问的域名
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Content-Type': 'application/json',
   };
 
   if (event.httpMethod === 'OPTIONS') {
     return {
-      statusCode: 200,
+      statusCode: 204,
       headers,
       body: '',
     };
   }
 
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({
-      message: 'CORS test successful',
-      method: event.httpMethod,
-      origin,
-    }),
-  };
-} 
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method Not Allowed' }),
+    };
+  }
+
+  try {
+    const data = JSON.parse(event.body || '{}');
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        message: 'CORS test successful',
+        method: event.httpMethod,
+        origin,
+        received: data,
+      }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 400,
+      headers,
+      body: JSON.stringify({ error: 'Invalid JSON' }),
+    };
+  }
+}
