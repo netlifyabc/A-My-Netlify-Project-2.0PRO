@@ -1,65 +1,186 @@
-import { verifyToken } from '../../lib/jwt.mjs';
+import jwt from 'jsonwebtoken';
+import fetch from 'node-fetch';
 
-const adminEndpoint = `https://${process.env.SHOPIFY_STORE_DOMAIN}/admin/api/${process.env.SHOPIFY_API_VERSION}/orders.json`;
-const adminToken = process.env.SHOPIFY_ADMIN_API_TOKEN;
+// 允许跨域的域名，逗号分隔（例如：'https://netlifyabc.github.io,https://yourdomain.com'）
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS || '';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!process.env.SHOPIFY_STORE_DOMAIN || !process.env.SHOPIFY_API_VERSION || !adminToken) {
-  throw new Error('Missing Shopify Admin API environment variables');
+function getCorsHeaders(origin) {
+  const allowedOrigins = ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean);
+  if (allowedOrigins.includes(origin)) {
+    return {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Credentials': 'true',
+    };
+  }
+  // 如果请求的 Origin 不在白名单中，则不返回跨域头，浏览器会拒绝
+  return {};
 }
 
-export default async (req, res) => {
-  // ✅ 检查是否为 GET 请求
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+export async function handler(event) {
+  const origin = event.headers.origin || '';
+  const corsHeaders = getCorsHeaders(origin);
+
+  // 预检请求
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: '',
+    };
   }
 
-  // ✅ 检查 Authorization Header
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  // 只允许 POST
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ error: 'Method Not Allowed. Use POST.' }),
+    };
   }
 
-  const token = authHeader.replace('Bearer ', '');
-  const user = verifyToken(token);
-
-  if (!user || user.role !== 'admin') {
-    return res.status(403).json({ error: 'Unauthorized' });
+  // 验证环境变量是否配置
+  if (!JWT_SECRET) {
+    console.error('Missing JWT_SECRET environment variable');
+    return {
+      statusCode: 500,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ error: 'Server configuration error' }),
+    };
   }
 
   try {
-    const response = await fetch(adminEndpoint, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Access-Token': adminToken,
-      }
-    });
+    const { firstName, lastName, email, password } = JSON.parse(event.body || '{}');
 
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Shopify Admin API error:', text);
-      return res.status(500).json({ error: 'Failed to fetch orders' });
+    if (!email || !password || !firstName || !lastName) {
+      return {
+        statusCode: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ error: 'Missing required fields: firstName, lastName, email, password' }),
+      };
     }
 
-    const data = await response.json();
+    const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-01';
+    const storefrontToken = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
-    // ✅ 可以自定义过滤/格式化字段
-    const orders = data.orders.map(order => ({
-      id: order.id,
-      name: order.name,
-      email: order.email,
-      total: order.total_price,
-      currency: order.currency,
-      createdAt: order.created_at,
-      financialStatus: order.financial_status,
-      fulfillmentStatus: order.fulfillment_status
-    }));
+    if (!shopifyDomain || !storefrontToken) {
+      console.error('Missing Shopify environment variables');
+      return {
+        statusCode: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ error: 'Server configuration error' }),
+      };
+    }
 
-    return res.status(200).json({ orders });
+    const endpoint = `https://${shopifyDomain}/api/${apiVersion}/graphql.json`;
 
-  } catch (err) {
-    console.error('Unexpected error:', err);
-    return res.status(500).json({ error: 'Server error' });
+    const mutation = `
+      mutation customerCreate($input: CustomerCreateInput!) {
+        customerCreate(input: $input) {
+          customer {
+            id
+            firstName
+            lastName
+            email
+          }
+          customerUserErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+
+    const variables = { input: { firstName, lastName, email, password } };
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': storefrontToken,
+      },
+      body: JSON.stringify({ query: mutation, variables }),
+    });
+
+    const result = await response.json();
+
+    if (result.errors) {
+      console.error('Shopify API errors:', result.errors);
+      return {
+        statusCode: 500,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ error: 'Shopify API error', details: result.errors }),
+      };
+    }
+
+    const { customer, customerUserErrors } = result.data.customerCreate;
+
+    if (customerUserErrors && customerUserErrors.length > 0) {
+      return {
+        statusCode: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ error: 'Shopify validation failed', details: customerUserErrors }),
+      };
+    }
+
+    const payload = {
+      id: customer.id,
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+    };
+
+    const token = jwt.sign(payload, JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: 'Customer created successfully',
+        customer,
+        token,
+      }),
+    };
+  } catch (error) {
+    console.error('Register error:', error);
+    return {
+      statusCode: 500,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        error: 'Internal Server Error',
+        message: error.message,
+      }),
+    };
   }
-}; 
 
 
+}  
