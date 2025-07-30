@@ -1637,7 +1637,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }); 
 
+    
 const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
+const btnMyOrders = document.getElementById('btnMyOrders');
 
 btnMyOrders?.addEventListener('click', async (e) => {
   e.preventDefault();
@@ -1651,23 +1653,24 @@ btnMyOrders?.addEventListener('click', async (e) => {
   try {
     const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ customerAccessToken }),
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', [...response.headers.entries()]);
+
+    const responseText = await response.text();
+    console.log('Response body:', responseText);
+
     if (!response.ok) {
-      throw new Error('获取订单失败');
+      throw new Error(`获取订单失败，状态码 ${response.status}，内容：${responseText}`);
     }
 
-    const data = await response.json();
+    const data = JSON.parse(responseText);
     const orders = data.orders || [];
 
-    // 保存订单数据到 sessionStorage
     sessionStorage.setItem('myOrders', JSON.stringify(orders));
-
-    // 跳转到订单详情页
     window.location.href = 'order.html';
 
   } catch (err) {
