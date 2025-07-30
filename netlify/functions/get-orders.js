@@ -1,46 +1,14 @@
-// ✅ Node.js 18+ 原生 fetch get-orders.js 
+import fetch from 'node-fetch';
 
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
-const API_VERSION = process.env.SHOPIFY_API_VERSION;
+const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-01';
 const STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
-if (!SHOPIFY_DOMAIN || !API_VERSION || !STOREFRONT_TOKEN) {
-  throw new Error('❌ Missing Shopify environment variables');
-}
-
-const endpoint = `https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`;
-
-// 注意这里的 origin 是调用页面的 origin，不是函数的 URL
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': 'https://my-netlify-pro.netlify.app',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-// Shopify Storefront API GraphQL 请求封装
-async function shopifyFetch(query, variables = {}, token = STOREFRONT_TOKEN) {
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': token,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  const text = await res.text();
-  if (!res.ok) {
-    console.error('❌ HTTP Error:', res.status, text);
-    throw new Error(`Shopify API HTTP error ${res.status}`);
-  }
-
-  const json = JSON.parse(text);
-  if (json.errors) {
-    console.error('❌ GraphQL Error:', JSON.stringify(json.errors, null, 2));
-    throw new Error('GraphQL errors from Shopify');
-  }
-  return json.data;
-}
+// 允许的前端域名，写你实际前端地址
+const ALLOWED_ORIGINS = [
+  'https://netlifyabc.github.io',
+  'https://my-netlify-pro.netlify.app',
+];
 
 // GraphQL 查询客户订单
 const CUSTOMER_ORDERS_QUERY = `
@@ -73,67 +41,110 @@ const CUSTOMER_ORDERS_QUERY = `
   }
 `;
 
-exports.handler = async (event) => {
-  // 处理 CORS 预检请求
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: CORS_HEADERS,
-      body: 'OK',
-    };
-  }
-
-  // 只允许 POST 方法
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: 'Method Not Allowed',
-    };
-  }
-
+export async function handler(event) {
   try {
-    const body = JSON.parse(event.body);
+    const origin = event.headers.origin;
+    // 判断请求的 Origin 是否在允许列表中，未命中则不允许跨域
+    const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
+
+    const headers = {
+      'Access-Control-Allow-Origin': allowedOrigin,
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Content-Type': 'application/json',
+    };
+
+    if (event.httpMethod === 'OPTIONS') {
+      // CORS 预检请求响应
+      return {
+        statusCode: 200,
+        headers,
+        body: '',
+      };
+    }
+
+    if (event.httpMethod !== 'POST') {
+      return {
+        statusCode: 405,
+        headers,
+        body: JSON.stringify({ error: 'Method Not Allowed' }),
+      };
+    }
+
+    const body = JSON.parse(event.body || '{}');
     const { customerAccessToken } = body;
 
     if (!customerAccessToken) {
       return {
         statusCode: 400,
-        headers: CORS_HEADERS,
+        headers,
         body: JSON.stringify({ error: 'Missing customerAccessToken' }),
       };
     }
 
-    // 使用客户 access token 查询订单
-    const data = await shopifyFetch(CUSTOMER_ORDERS_QUERY, { customerAccessToken });
+    // 调用 Shopify Storefront API
+    const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': STOREFRONT_TOKEN,
+      },
+      body: JSON.stringify({
+        query: CUSTOMER_ORDERS_QUERY,
+        variables: { customerAccessToken },
+      }),
+    });
 
-    if (!data.customer) {
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('Shopify API HTTP error:', response.status, text);
+      return {
+        statusCode: response.status,
+        headers,
+        body: JSON.stringify({ error: 'Shopify API request failed' }),
+      };
+    }
+
+    const result = await response.json();
+
+    if (result.errors) {
+      console.error('Shopify GraphQL errors:', result.errors);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Shopify GraphQL errors', details: result.errors }),
+      };
+    }
+
+    if (!result.data.customer) {
       return {
         statusCode: 404,
-        headers: CORS_HEADERS,
+        headers,
         body: JSON.stringify({ error: 'Customer not found or invalid token' }),
       };
     }
 
-    const orders = data.customer.orders.edges.map(edge => edge.node);
+    const orders = result.data.customer.orders.edges.map(edge => edge.node);
 
     return {
       statusCode: 200,
-      headers: CORS_HEADERS,
+      headers,
       body: JSON.stringify({ orders }),
     };
-  } catch (err) {
-    console.error('❌ get-orders error:', err);
+  } catch (error) {
+    console.error('get-orders handler error:', error);
     return {
       statusCode: 500,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: err.message || 'Internal Server Error' }),
+      headers: {
+        'Access-Control-Allow-Origin': '*', // 服务器错误时允许跨域
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ error: 'Internal Server Error', message: error.message }),
     };
   }
 
 
 
-  
-
-  
-}; 
+} 
