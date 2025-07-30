@@ -1318,6 +1318,7 @@
   <footer>
     <p>© 2025 WayHome 家居品牌 | <a href="#">隐私政策</a> | <a href="#">服务条款</a></p>
   </footer>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   /* ===== 促销条倒计时及关闭按钮 ===== */
@@ -1622,49 +1623,48 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('jwtToken');
     resetWelcomeUI();
   });
+/* ===== 获取订单按钮逻辑 ===== */
+const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
 
-  /* ===== 获取订单按钮逻辑 ===== */
-  const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
+btnMyOrders?.addEventListener('click', async (e) => {
+  e.preventDefault();
 
-  btnMyOrders?.addEventListener('click', async (e) => {
-    e.preventDefault();
+  const jwtToken = localStorage.getItem('jwtToken');
+  if (!jwtToken) {
+    alert('请先登录');
+    return;
+  }
 
-    const jwtToken = localStorage.getItem('jwtToken');
-    if (!jwtToken) {
-      alert('请先登录');
-      return;
+  try {
+    const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
+      method: 'POST', // 后端要求 POST
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ customerAccessToken: jwtToken }) // 传入 token
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`获取订单失败：${text}`);
     }
 
-    try {
-      const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
-        method: 'POST', // 注意必须是 POST
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({}) // 传空对象，后端需要 POST
-      });
+    const data = await response.json();
+    const orders = data.orders || [];
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`获取订单失败：${text}`);
-      }
+    sessionStorage.setItem('myOrders', JSON.stringify(orders));
+    window.location.href = 'order.html'; // 跳转订单页
 
-      const data = await response.json();
-      const orders = data.orders || [];
-
-      sessionStorage.setItem('myOrders', JSON.stringify(orders));
-      window.location.href = 'order.html'; // 跳转订单页
-
-    } catch (err) {
-      console.error('订单获取失败:', err);
-      alert(err.message || '获取订单出错');
-    }
-  });
+  } catch (err) {
+    console.error('订单获取失败:', err);
+    alert(err.message || '获取订单出错');
+  }
+});
 
 });
 </script>
 
 </body>
 
-</html>   
+
+</html>    
