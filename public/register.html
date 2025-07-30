@@ -1052,8 +1052,7 @@
     </svg>
     <span id="signInText">Sign In</span> 
   </a>
-
-  <a href="/orders" id="btnMyOrders" class="btn-inline" style="display: none;">我的订单</a> 
+<a href="#" id="btnMyOrders" class="btn-inline" style="display: none;">我的订单</a>
 
   <a href="#" id="btnSignOut" class="btn-inline" style="display: none;">Sign Out</a>
 
@@ -1638,8 +1637,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   
 
- const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
-
+const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
 
 btnMyOrders?.addEventListener('click', async (e) => {
   e.preventDefault();
@@ -1666,23 +1664,19 @@ btnMyOrders?.addEventListener('click', async (e) => {
     const data = await response.json();
     const orders = data.orders || [];
 
-    if (orders.length === 0) {
-      alert('您还没有订单');
-    } else {
-      const orderList = orders.map(order =>
-        `订单号: ${order.orderNumber}，状态: ${order.fulfillmentStatus || '未知'}`
-      ).join('\n');
+    // 保存订单数据到 sessionStorage
+    sessionStorage.setItem('myOrders', JSON.stringify(orders));
 
-      alert(`共 ${orders.length} 个订单:\n${orderList}`);
-    }
+    // 跳转到订单详情页
+    window.location.href = 'order.html';
+
   } catch (err) {
     console.error('订单获取失败:', err);
     alert(err.message || '获取订单出错');
   }
 });
-
-});
+}); 
 
 </script>
 </body>
-</html> 
+</html>  

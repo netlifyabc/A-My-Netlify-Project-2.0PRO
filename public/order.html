@@ -247,9 +247,7 @@
 
   <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer>
 
-  <script>
-    const API_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
-
+ <script>
     function showMessage(text, isError = true) {
       const msg = document.getElementById('message');
       msg.style.display = 'block';
@@ -263,53 +261,10 @@
       msg.textContent = '';
     }
 
-    async function fetchOrders() {
-      try {
-        const customerAccessToken = localStorage.getItem('jwtToken') || '';
-        if (!customerAccessToken) {
-          // 页面内提示登录，更友好
-          hideMessage();
-          showMessage('您尚未登录，请先登录以查看订单。', true);
-          document.getElementById('loadingMsg').style.display = 'none';
-          document.getElementById('orderList').style.display = 'none';
-          document.getElementById('noOrdersMsg').style.display = 'none';
-          // 显示登录按钮
-          const btn = document.createElement('a');
-          btn.href = '/login.html';
-          btn.textContent = '去登录';
-          btn.className = 'btn-primary';
-          btn.setAttribute('role', 'button');
-          const main = document.querySelector('main');
-          main.appendChild(btn);
-          return [];
-        }
-
-        const res = await fetch(`${API_BASE}/get-orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customerAccessToken }),
-        });
-
-        if (!res.ok) throw new Error('获取订单失败');
-
-        const data = await res.json();
-        return data.orders || [];
-      } catch (err) {
-        console.error(err);
-        showMessage('加载中，请稍候...');
-        return [];
-      }
-    }
-
     function formatDate(isoString) {
       if (!isoString) return '未知日期';
       const d = new Date(isoString);
-      if (isNaN(d)) return '未知日期';
-      return d.toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
+      return isNaN(d) ? '未知日期' : d.toLocaleString('zh-CN');
     }
 
     function renderOrders(orders) {
@@ -317,7 +272,7 @@
       const noOrdersMsg = document.getElementById('noOrdersMsg');
       listEl.innerHTML = '';
 
-      if (orders.length === 0) {
+      if (!orders || orders.length === 0) {
         noOrdersMsg.style.display = 'block';
         listEl.style.display = 'none';
         return;
@@ -327,36 +282,48 @@
       listEl.style.display = 'block';
 
       orders.forEach((order, i) => {
-        const shortId = order.id?.slice(-6) || '未知ID';
-        const date = formatDate(order.processedAt || order.createdAt || '');
-        const total = order.totalPriceV2?.amount
-          ? `${order.totalPriceV2.amount} ${order.totalPriceV2.currencyCode}`
-          : '未知金额';
-        const status = order.fulfillmentStatus || '未知状态';
-
         const li = document.createElement('li');
         li.className = 'order-item';
-        li.style.setProperty('--delay', `${i * 0.15}s`);
         li.innerHTML = `
-          <div class="order-id">订单号：${shortId}</div>
-          <div class="order-info">下单日期：${date}</div>
-          <div class="order-info">总金额：${total}</div>
-          <div class="order-info">订单状态：${status}</div>
+          <div class="order-id">订单号：${order.orderNumber || '未知'}</div>
+          <div class="order-info">下单时间：${formatDate(order.processedAt)}</div>
+          <div class="order-info">状态：${order.fulfillmentStatus || '未知'}</div>
+          <div class="order-info">总金额：${order.totalPriceV2?.amount || '?'} ${order.totalPriceV2?.currencyCode || ''}</div>
+          <ul>
+            ${(order.lineItems?.edges || []).map(edge => `
+              <li>${edge.node.title} × ${edge.node.quantity}</li>
+            `).join('')}
+          </ul>
         `;
         listEl.appendChild(li);
       });
     }
 
-    (async () => {
+    // 主逻辑
+    (function () {
       const loadingMsg = document.getElementById('loadingMsg');
-      loadingMsg.style.display = 'block';
       hideMessage();
+      loadingMsg.style.display = 'block';
 
-      const orders = await fetchOrders();
+      try {
+        const rawOrders = sessionStorage.getItem('myOrders');
+        if (!rawOrders) {
+          showMessage('无法加载订单，请从主页点击“我的订单”进入此页。');
+          loadingMsg.style.display = 'none';
+          return;
+        }
 
-      loadingMsg.style.display = 'none';
-      renderOrders(orders);
+        const orders = JSON.parse(rawOrders);
+        loadingMsg.style.display = 'none';
+        renderOrders(orders);
+      } catch (err) {
+        console.error('订单渲染失败:', err);
+        showMessage('订单数据格式有误，无法显示。');
+        loadingMsg.style.display = 'none';
+      }
     })();
+
+    
   </script>
 </body>
 </html> 
