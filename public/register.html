@@ -1637,41 +1637,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }); 
 
-    
-const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
+
 const btnMyOrders = document.getElementById('btnMyOrders');
+const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
 
 btnMyOrders?.addEventListener('click', async (e) => {
   e.preventDefault();
 
-  const customerAccessToken = localStorage.getItem('jwtToken');
-  if (!customerAccessToken) {
+  const jwtToken = localStorage.getItem('jwtToken');
+  if (!jwtToken) {
     alert('请先登录');
     return;
   }
 
   try {
     const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerAccessToken }),
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`
+      }
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', [...response.headers.entries()]);
-
-    const responseText = await response.text();
-    console.log('Response body:', responseText);
-
     if (!response.ok) {
-      throw new Error(`获取订单失败，状态码 ${response.status}，内容：${responseText}`);
+      const text = await response.text();
+      throw new Error(`获取订单失败：${text}`);
     }
 
-    const data = JSON.parse(responseText);
+    const data = await response.json();
     const orders = data.orders || [];
 
     sessionStorage.setItem('myOrders', JSON.stringify(orders));
-    window.location.href = 'order.html';
+    window.location.href = 'order.html';  // ✅ 你可以在这个页面中解析并展示订单
 
   } catch (err) {
     console.error('订单获取失败:', err);
@@ -1682,4 +1678,9 @@ btnMyOrders?.addEventListener('click', async (e) => {
 
 </script>
 </body>
+
+
+
+
+
 </html>  

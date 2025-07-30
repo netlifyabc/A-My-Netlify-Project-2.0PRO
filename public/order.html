@@ -183,6 +183,15 @@
     animation: dotsBounce 1.4s infinite;
   }
 
+  #messageBox {
+    /* 关键样式，让 \n 换行生效 */
+    white-space: pre-line;
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 300px;
+    font-size: 16px;
+  }
+
   @keyframes dotsBounce {
     0%, 20% {
       content: '';
@@ -233,97 +242,115 @@
   <main role="main" tabindex="-1" aria-labelledby="orders-title">
     <h2 id="orders-title">我的订单</h2>
 
+    <!-- 消息提示区域 -->
     <div id="message" role="alert" aria-live="assertive"></div>
+
+    <!-- 加载中提示 -->
     <p id="loadingMsg" aria-live="polite">加载中，请稍候</p>
 
+    <!-- 订单列表 -->
     <ul id="orderList" class="order-list" aria-live="polite" aria-relevant="additions removals" tabindex="0">
       <!-- 订单列表动态插入这里 -->
     </ul>
 
-    <p id="noOrdersMsg" class="no-orders" style="display:none;">您暂无订单，赶快去购物吧！</p> 
+    <!-- 无订单提示 -->
+    <p id="noOrdersMsg" class="no-orders">您暂无订单，赶快去购物吧！</p> 
 
     <a href="/" class="btn-primary" role="button">返回首页</a>
   </main>
 
-  <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer>
+  <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer> 
+<script>
+  function showMessage(text, isError = true) {
+    const msg = document.getElementById('message');
+    msg.style.display = 'block';
+    msg.style.color = isError ? 'red' : 'green';
+    msg.textContent = text;
+  }
 
- <script>
-    function showMessage(text, isError = true) {
-      const msg = document.getElementById('message');
-      msg.style.display = 'block';
-      msg.style.color = isError ? 'red' : 'green';
-      msg.textContent = text;
+  function hideMessage() {
+    const msg = document.getElementById('message');
+    msg.style.display = 'none';
+    msg.textContent = '';
+  }
+
+  function formatDate(isoString) {
+    if (!isoString) return '未知日期';
+    const d = new Date(isoString);
+    return isNaN(d) ? '未知日期' : d.toLocaleString('zh-CN');
+  }
+
+  function renderOrders(orders) {
+    const listEl = document.getElementById('orderList');
+    const noOrdersMsg = document.getElementById('noOrdersMsg');
+    listEl.innerHTML = '';
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      noOrdersMsg.style.display = 'block';
+      listEl.style.display = 'none';
+      return;
     }
 
-    function hideMessage() {
-      const msg = document.getElementById('message');
-      msg.style.display = 'none';
-      msg.textContent = '';
+    noOrdersMsg.style.display = 'none';
+    listEl.style.display = 'block';
+
+    orders.forEach((order) => {
+      const li = document.createElement('li');
+      li.className = 'order-item';
+
+      const lineItems = (order.lineItems?.edges || []).map(edge => {
+        const item = edge.node;
+        return `<li>${item.title} × ${item.quantity}</li>`;
+      }).join('');
+
+      li.innerHTML = `
+        <div class="order-id">订单号：${order.name || order.orderNumber || '未知'}</div>
+        <div class="order-info">下单时间：${formatDate(order.processedAt || order.createdAt)}</div>
+        <div class="order-info">状态：${order.fulfillmentStatus || '未知'}</div>
+        <div class="order-info">总金额：${order.totalPriceV2?.amount || order.total || '?'} ${order.totalPriceV2?.currencyCode || order.currency || ''}</div>
+        <ul>${lineItems}</ul>
+      `;
+      listEl.appendChild(li);
+    });
+  }
+
+(function () {
+  const loadingMsg = document.getElementById('loadingMsg');
+  const messageBox = document.getElementById('messageBox'); // 请确保页面有这个元素
+
+  function showMessage(msg) {
+    messageBox.innerText = msg;
+    messageBox.style.display = 'block';
+  }
+
+  function hideMessage() {
+    messageBox.style.display = 'none';
+  }
+
+  hideMessage();
+  loadingMsg.style.display = 'block';
+
+  try {
+    const rawOrders = sessionStorage.getItem('myOrders');
+    if (!rawOrders) {
+      showMessage('抱歉，系统暂时无法加载您的订单。\n请返回首页，点击“我的订单”重新进入看看吧。');
+      loadingMsg.style.display = 'none';
+      return;
     }
 
-    function formatDate(isoString) {
-      if (!isoString) return '未知日期';
-      const d = new Date(isoString);
-      return isNaN(d) ? '未知日期' : d.toLocaleString('zh-CN');
-    }
+    const orders = JSON.parse(rawOrders);
+    renderOrders(orders);
+  } catch (err) {
+    console.error('订单渲染失败:', err);
+    showMessage('订单数据异常，无法显示。');
+  } finally {
+    loadingMsg.style.display = 'none';
+  }
+})();
 
-    function renderOrders(orders) {
-      const listEl = document.getElementById('orderList');
-      const noOrdersMsg = document.getElementById('noOrdersMsg');
-      listEl.innerHTML = '';
+</script> 
 
-      if (!orders || orders.length === 0) {
-        noOrdersMsg.style.display = 'block';
-        listEl.style.display = 'none';
-        return;
-      }
-
-      noOrdersMsg.style.display = 'none';
-      listEl.style.display = 'block';
-
-      orders.forEach((order, i) => {
-        const li = document.createElement('li');
-        li.className = 'order-item';
-        li.innerHTML = `
-          <div class="order-id">订单号：${order.orderNumber || '未知'}</div>
-          <div class="order-info">下单时间：${formatDate(order.processedAt)}</div>
-          <div class="order-info">状态：${order.fulfillmentStatus || '未知'}</div>
-          <div class="order-info">总金额：${order.totalPriceV2?.amount || '?'} ${order.totalPriceV2?.currencyCode || ''}</div>
-          <ul>
-            ${(order.lineItems?.edges || []).map(edge => `
-              <li>${edge.node.title} × ${edge.node.quantity}</li>
-            `).join('')}
-          </ul>
-        `;
-        listEl.appendChild(li);
-      });
-    }
-
-    // 主逻辑
-    (function () {
-      const loadingMsg = document.getElementById('loadingMsg');
-      hideMessage();
-      loadingMsg.style.display = 'block';
-
-      try {
-        const rawOrders = sessionStorage.getItem('myOrders');
-        if (!rawOrders) {
-          showMessage('无法加载订单，请从主页点击“我的订单”进入此页。');
-          loadingMsg.style.display = 'none';
-          return;
-        }
-
-        const orders = JSON.parse(rawOrders);
-        loadingMsg.style.display = 'none';
-        renderOrders(orders);
-      } catch (err) {
-        console.error('订单渲染失败:', err);
-        showMessage('订单数据格式有误，无法显示。');
-        loadingMsg.style.display = 'none';
-      }
-    })();
-
-    
-  </script>
 </body>
+
+
 </html> 
