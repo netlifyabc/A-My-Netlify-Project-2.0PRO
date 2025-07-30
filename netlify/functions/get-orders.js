@@ -4,7 +4,7 @@ const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
 const API_VERSION = process.env.SHOPIFY_API_VERSION || '2024-01';
 const STOREFRONT_TOKEN = process.env.SHOPIFY_STOREFRONT_TOKEN;
 
-// 允许的前端域名，写你实际前端地址
+// 允许的前端域名，替换成你的实际前端地址
 const ALLOWED_ORIGINS = [
   'https://netlifyabc.github.io',
   'https://my-netlify-pro.netlify.app',
@@ -44,7 +44,6 @@ const CUSTOMER_ORDERS_QUERY = `
 export async function handler(event) {
   try {
     const origin = event.headers.origin;
-    // 判断请求的 Origin 是否在允许列表中，未命中则不允许跨域
     const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
 
     const headers = {
@@ -54,8 +53,8 @@ export async function handler(event) {
       'Content-Type': 'application/json',
     };
 
+    // 处理 CORS 预检请求
     if (event.httpMethod === 'OPTIONS') {
-      // CORS 预检请求响应
       return {
         statusCode: 200,
         headers,
@@ -136,7 +135,7 @@ export async function handler(event) {
     return {
       statusCode: 500,
       headers: {
-        'Access-Control-Allow-Origin': '*', // 服务器错误时允许跨域
+        'Access-Control-Allow-Origin': '*', // 错误时允许跨域避免客户端拦截
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json',
@@ -144,6 +143,7 @@ export async function handler(event) {
       body: JSON.stringify({ error: 'Internal Server Error', message: error.message }),
     };
   }
+
 
 
 
