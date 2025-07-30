@@ -10,8 +10,9 @@ if (!SHOPIFY_DOMAIN || !API_VERSION || !STOREFRONT_TOKEN) {
 
 const endpoint = `https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`;
 
+// 注意这里的 origin 是调用页面的 origin，不是函数的 URL
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',  // 生产环境建议指定具体域名
+  'Access-Control-Allow-Origin': 'https://my-netlify-pro.netlify.app',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -129,4 +130,10 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: err.message || 'Internal Server Error' }),
     };
   }
+
+
+
+  
+
+  
 }; 
