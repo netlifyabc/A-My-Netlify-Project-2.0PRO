@@ -1369,6 +1369,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const authModal = document.getElementById('authModal');
   const closeAuthBtn = document.getElementById('closeAuth');
@@ -1634,44 +1636,52 @@ document.addEventListener('DOMContentLoaded', () => {
     resetWelcomeUI();
   });
 
+ 
+ 
+ 
   // “我的订单”按钮逻辑
-  btnMyOrders?.addEventListener('click', async (e) => {
-    e.preventDefault();  // 阻止默认跳转，使用 Ajax 获取订单
 
-    const token = localStorage.getItem('jwtToken');
-    if (!token) {
-      alert('请先登录');
-      return;
+  const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
+
+btnMyOrders?.addEventListener('click', async (e) => {
+  e.preventDefault();  // 阻止默认跳转，使用 Ajax 获取订单
+
+  const token = localStorage.getItem('jwtToken');
+  if (!token) {
+    alert('请先登录');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
+      method: 'POST',  // 改为 POST
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ customerAccessToken: token }),  // 传入 token
+    });
+
+    if (!response.ok) {
+      throw new Error('获取订单失败');
     }
 
-    try {
-      const response = await fetch('/.netlify/functions/get-orders', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+    const data = await response.json();
+    const orders = data.orders || [];
 
-      if (!response.ok) {
-        throw new Error('获取订单失败');
-      }
+    console.log('订单数据:', orders);
 
-      const orders = await response.json();
-      console.log('订单数据:', orders);
-
-      // 这里简单弹窗展示订单数和订单ID列表，你可以根据需求渲染页面或弹窗
-      if (orders.length === 0) {
-        alert('您还没有订单');
-      } else {
-        let orderList = orders.map(order => `订单号: ${order.id}，状态: ${order.status}`).join('\n');
-        alert(`共 ${orders.length} 个订单:\n${orderList}`);
-      }
-
-    } catch (error) {
-      alert(error.message);
+    if (orders.length === 0) {
+      alert('您还没有订单');
+    } else {
+      let orderList = orders.map(order => `订单号: ${order.orderNumber}，状态: ${order.fulfillmentStatus || '未知'}`).join('\n');
+      alert(`共 ${orders.length} 个订单:\n${orderList}`);
     }
-  });
+
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
 });
 
 </script>
