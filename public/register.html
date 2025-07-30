@@ -1623,7 +1623,8 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('jwtToken');
     resetWelcomeUI();
   });
-/* ===== 获取订单按钮逻辑 ===== */
+
+  /* ===== 获取订单按钮逻辑 ===== */
 const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
 
 btnMyOrders?.addEventListener('click', async (e) => {
@@ -1639,9 +1640,10 @@ btnMyOrders?.addEventListener('click', async (e) => {
     const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
       method: 'POST', // 后端要求 POST
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwtToken}`,  // 关键：把JWT放在这里
       },
-      body: JSON.stringify({ customerAccessToken: jwtToken }) // 传入 token
+      body: JSON.stringify({}) // 请求体可为空对象
     });
 
     if (!response.ok) {
@@ -1665,6 +1667,4 @@ btnMyOrders?.addEventListener('click', async (e) => {
 </script>
 
 </body>
-
-
 </html>    
