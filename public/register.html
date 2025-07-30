@@ -1637,7 +1637,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }); 
 
-
 const btnMyOrders = document.getElementById('btnMyOrders');
 const NETLIFY_FUNCTIONS_BASE = 'https://my-netlify-pro.netlify.app/.netlify/functions';
 
@@ -1652,10 +1651,12 @@ btnMyOrders?.addEventListener('click', async (e) => {
 
   try {
     const response = await fetch(`${NETLIFY_FUNCTIONS_BASE}/get-orders`, {
-      method: 'GET',
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${jwtToken}`
-      }
+        'Authorization': `Bearer ${jwtToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
     });
 
     if (!response.ok) {
@@ -1667,7 +1668,7 @@ btnMyOrders?.addEventListener('click', async (e) => {
     const orders = data.orders || [];
 
     sessionStorage.setItem('myOrders', JSON.stringify(orders));
-    window.location.href = 'order.html';  // ✅ 你可以在这个页面中解析并展示订单
+    window.location.href = 'order.html';  // 跳转到订单页面展示
 
   } catch (err) {
     console.error('订单获取失败:', err);
@@ -1678,7 +1679,6 @@ btnMyOrders?.addEventListener('click', async (e) => {
 
 </script>
 </body>
-
 
 
 
