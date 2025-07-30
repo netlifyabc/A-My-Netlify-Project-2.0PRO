@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>我的订单 | YourShop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --primary-color: #7f187f;
+      --primary-color-hover: #5a115a;
+      --background-color: #faf8fb;
+      --text-color: #2c2c2c;
+      --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      --radius: 10px;
+      --border-color: #ddd;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: var(--background-color);
+      font-family: "Inter", sans-serif;
+      color: var(--text-color);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: #fff;
+      box-shadow: var(--box-shadow);
+      padding: 1.5rem 0;
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      color: var(--primary-color);
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+
+    main {
+      background-color: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--box-shadow);
+      padding: 2rem 2rem 3rem;
+      margin-top: 6rem;
+      max-width: 480px;
+      width: 90vw;
+      min-height: 300px;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-weight: 600;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--primary-color);
+    }
+
+    .order-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+    }
+
+    .order-item {
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 0;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+    }
+
+    .order-id {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .order-date,
+    .order-total,
+    .order-status {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 0.2rem;
+    }
+
+    .no-orders {
+      font-size: 1rem;
+      color: #777;
+      margin-top: 3rem;
+    }
+
+    footer {
+      margin-top: auto;
+      width: 100%;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #999;
+      padding: 1rem 0;
+      background: transparent;
+      position: fixed;
+      bottom: 0;
+    }
+
+    a.btn-primary {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 12px 24px;
+      background-color: var(--primary-color);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      user-select: none;
+    }
+
+    a.btn-primary:hover,
+    a.btn-primary:focus {
+      background-color: var(--primary-color-hover);
+      outline: none;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>YourShop</h1>
+  </header>
+
+  <main role="main" tabindex="-1">
+    <h2>我的订单</h2>
+    <ul id="orderList" class="order-list" aria-live="polite" aria-relevant="additions removals">
+      <!-- 订单列表动态插入这里 -->
+    </ul>
+    <p id="noOrdersMsg" class="no-orders" style="display:none;">您暂无订单，赶快去购物吧！</p>
+    <a href="/" class="btn-primary" role="button">返回首页</a>
+  </main>
+
+  <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer>
+
+  <script>
+    // 假设你已经有获取到的订单数据，这里做示例：
+    // 实际中你需要通过 fetch 调用 get-orders API 获取真实订单
+
+    async function fetchOrders() {
+      try {
+        // 这里用你的实际 Netlify 函数地址和有效的 customerAccessToken
+        const customerAccessToken = localStorage.getItem('customerAccessToken') || '';
+        if (!customerAccessToken) {
+          alert('请先登录');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const res = await fetch('/.netlify/functions/get-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customerAccessToken }),
+        });
+
+        if (!res.ok) throw new Error('获取订单失败');
+
+        const data = await res.json();
+        return data.orders || [];
+      } catch (err) {
+        console.error(err);
+        alert('获取订单时出错，请稍后重试');
+        return [];
+      }
+    }
+
+    function formatDate(isoString) {
+      const d = new Date(isoString);
+      return d.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+    }
+
+    function renderOrders(orders) {
+      const listEl = document.getElementById('orderList');
+      const noOrdersMsg = document.getElementById('noOrdersMsg');
+      listEl.innerHTML = '';
+
+      if (orders.length === 0) {
+        noOrdersMsg.style.display = 'block';
+        return;
+      }
+      noOrdersMsg.style.display = 'none';
+
+      orders.forEach((order) => {
+        // 订单ID可能是 Shopify ID，做个简单截断展示
+        const shortId = order.id?.slice(-6) || '未知ID';
+        const date = formatDate(order.processedAt || order.createdAt || '');
+        const total = order.totalPriceV2?.amount
+          ? `${order.totalPriceV2.amount} ${order.totalPriceV2.currencyCode}`
+          : '未知金额';
+        const status = order.fulfillmentStatus || '未知状态';
+
+        const li = document.createElement('li');
+        li.className = 'order-item';
+        li.innerHTML = `
+          <div class="order-id">订单号：${shortId}</div>
+          <div class="order-date">下单日期：${date}</div>
+          <div class="order-total">总金额：${total}</div>
+          <div class="order-status">订单状态：${status}</div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    (async () => {
+      const orders = await fetchOrders();
+      renderOrders(orders);
+    })();
+  </script>
+</body>
+
+
+
+
+
+
+
+
+</html> 

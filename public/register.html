@@ -1041,6 +1041,8 @@
       </button>
     </div>
 
+
+
 <!-- 右侧操作区 -->
 <div class="action-icons">
   <a href="#" class="btn-signin">
@@ -1367,7 +1369,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-
 document.addEventListener('DOMContentLoaded', () => {
   const authModal = document.getElementById('authModal');
   const closeAuthBtn = document.getElementById('closeAuth');
@@ -1475,6 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (signInText) signInText.textContent = `👋 欢迎, ${name}`;
     if (signOutBtn) signOutBtn.style.display = 'inline';
     if (btnMyOrders) btnMyOrders.style.display = 'inline-block';
+    if (signInBtn) signInBtn.style.pointerEvents = 'none'; // 防止重复点击
   }
 
   // 恢复未登录状态 UI
@@ -1482,6 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (signInText) signInText.textContent = 'Sign In';
     if (signOutBtn) signOutBtn.style.display = 'none';
     if (btnMyOrders) btnMyOrders.style.display = 'none';
+    if (signInBtn) signInBtn.style.pointerEvents = 'auto';
     localStorage.removeItem('jwtToken');
   }
 
@@ -1531,12 +1534,10 @@ document.addEventListener('DOMContentLoaded', () => {
           showMessage((isRegisterMode ? '注册' : '登录') + '失败: ' + (result.error || JSON.stringify(result)), true);
         }
       } else {
-
-         if (isRegisterMode) {
+        if (isRegisterMode) {
           showMessage('注册成功! ' + result.message, false);
           currentUserEmail = data.email;
           showVerifyRegisterNotice();
-
 
           // 切换到登录模式
           isRegisterMode = false;
@@ -1634,7 +1635,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // “我的订单”按钮逻辑
-  btnMyOrders?.addEventListener('click', async () => {
+  btnMyOrders?.addEventListener('click', async (e) => {
+    e.preventDefault();  // 阻止默认跳转，使用 Ajax 获取订单
+
     const token = localStorage.getItem('jwtToken');
     if (!token) {
       alert('请先登录');
@@ -1656,18 +1659,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const orders = await response.json();
       console.log('订单数据:', orders);
-      alert('成功获取订单，详情请查看控制台');
-      // 可扩展：将订单数据显示到页面
-   } catch (error) {
-    alert(error.message);
-  }
-});
+
+      // 这里简单弹窗展示订单数和订单ID列表，你可以根据需求渲染页面或弹窗
+      if (orders.length === 0) {
+        alert('您还没有订单');
+      } else {
+        let orderList = orders.map(order => `订单号: ${order.id}，状态: ${order.status}`).join('\n');
+        alert(`共 ${orders.length} 个订单:\n${orderList}`);
+      }
+
+    } catch (error) {
+      alert(error.message);
+    }
+  });
 });
 
 </script>
 </body>
 </html> 
-
-
-
-
