@@ -256,11 +256,20 @@
     <!-- 无订单提示 -->
     <p id="noOrdersMsg" class="no-orders">您暂无订单，赶快去购物吧！</p> 
 
-    <a href="/" class="btn-primary" role="button">返回首页</a>
+    <a href="/home.html" class="btn-primary" role="button">返回首页</a>
+
   </main>
 
   <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer> 
+
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 绑定“返回首页”按钮的点击事件，防止默认跳转，改用 JS 跳转
+  document.querySelector('a.btn-primary').addEventListener('click', function(event) {
+    event.preventDefault();
+    window.location.href = 'https://netlifyabc.github.io/A-My-Netlify-Project-2.0PRO/public/order.html'; // 请根据实际首页地址修改
+  });
+
   function showMessage(text, isError = true) {
     const msg = document.getElementById('message');
     msg.style.display = 'block';
@@ -314,43 +323,34 @@
     });
   }
 
-(function () {
-  const loadingMsg = document.getElementById('loadingMsg');
-  const messageBox = document.getElementById('messageBox'); // 请确保页面有这个元素
+  (function () {
+    const loadingMsg = document.getElementById('loadingMsg');
 
-  function showMessage(msg) {
-    messageBox.innerText = msg;
-    messageBox.style.display = 'block';
-  }
+    hideMessage();
+    loadingMsg.style.display = 'block';
 
-  function hideMessage() {
-    messageBox.style.display = 'none';
-  }
+    try {
+      const rawOrders = sessionStorage.getItem('myOrders');
+      if (!rawOrders) {
+        showMessage('抱歉，系统暂时无法加载您的订单。\n请返回首页，点击“我的订单”重新进入看看吧。');
+        loadingMsg.style.display = 'none';
+        return;
+      }
 
-  hideMessage();
-  loadingMsg.style.display = 'block';
-
-  try {
-    const rawOrders = sessionStorage.getItem('myOrders');
-    if (!rawOrders) {
-      showMessage('抱歉，系统暂时无法加载您的订单。\n请返回首页，点击“我的订单”重新进入看看吧。');
+      const orders = JSON.parse(rawOrders);
+      renderOrders(orders);
+    } catch (err) {
+      console.error('订单渲染失败:', err);
+      showMessage('订单数据异常，无法显示。');
+    } finally {
       loadingMsg.style.display = 'none';
-      return;
     }
-
-    const orders = JSON.parse(rawOrders);
-    renderOrders(orders);
-  } catch (err) {
-    console.error('订单渲染失败:', err);
-    showMessage('订单数据异常，无法显示。');
-  } finally {
-    loadingMsg.style.display = 'none';
-  }
-})();
+  })();
+});
 
 </script> 
 
 </body>
 
 
-</html> 
+</html>  
