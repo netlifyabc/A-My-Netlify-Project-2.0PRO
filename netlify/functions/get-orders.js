@@ -1,4 +1,4 @@
-// ✅ Node.js 18+ 原生 fetch
+// ✅ Node.js 18+ 原生 fetch get-orders.js 
 
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
 const API_VERSION = process.env.SHOPIFY_API_VERSION;
@@ -11,12 +11,12 @@ if (!SHOPIFY_DOMAIN || !API_VERSION || !STOREFRONT_TOKEN) {
 const endpoint = `https://${SHOPIFY_DOMAIN}/api/${API_VERSION}/graphql.json`;
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',  // 生产可改成指定域名
+  'Access-Control-Allow-Origin': '*',  // 生产环境建议指定具体域名
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Storefront API GraphQL 请求
+// Shopify Storefront API GraphQL 请求封装
 async function shopifyFetch(query, variables = {}, token = STOREFRONT_TOKEN) {
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -32,6 +32,7 @@ async function shopifyFetch(query, variables = {}, token = STOREFRONT_TOKEN) {
     console.error('❌ HTTP Error:', res.status, text);
     throw new Error(`Shopify API HTTP error ${res.status}`);
   }
+
   const json = JSON.parse(text);
   if (json.errors) {
     console.error('❌ GraphQL Error:', JSON.stringify(json.errors, null, 2));
@@ -40,7 +41,7 @@ async function shopifyFetch(query, variables = {}, token = STOREFRONT_TOKEN) {
   return json.data;
 }
 
-// GraphQL 查询客户订单列表
+// GraphQL 查询客户订单
 const CUSTOMER_ORDERS_QUERY = `
   query customerOrders($customerAccessToken: String!) {
     customer(customerAccessToken: $customerAccessToken) {
@@ -72,6 +73,7 @@ const CUSTOMER_ORDERS_QUERY = `
 `;
 
 exports.handler = async (event) => {
+  // 处理 CORS 预检请求
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -80,6 +82,7 @@ exports.handler = async (event) => {
     };
   }
 
+  // 只允许 POST 方法
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -100,7 +103,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // 这里用客户 token 调用 Storefront API 获取订单
+    // 使用客户 access token 查询订单
     const data = await shopifyFetch(CUSTOMER_ORDERS_QUERY, { customerAccessToken });
 
     if (!data.customer) {
