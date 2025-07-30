@@ -119,12 +119,13 @@ export async function handler(event) {
       };
     }
 
-    // 生成 JWT
+    // ✅ 添加 customerAccessToken 到 JWT payload
     const payload = {
       id: customer.id,
       email: customer.email,
       firstName: customer.firstName,
       lastName: customer.lastName,
+      customerAccessToken: tokenInfo.accessToken,  // 必须有
     };
 
     const jwtToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
@@ -150,10 +151,10 @@ export async function handler(event) {
         stack: error.stack,
       }),
     };
+
+
+
+
+
   }
-
-
- 
-
-
-}
+} 
