@@ -331,13 +331,21 @@ footer {
     <!-- 无订单提示 -->
     <p id="noOrdersMsg" class="no-orders">您暂无订单，赶快去购物吧！</p> 
 
-    <a href="/home.html" class="btn-primary" role="button">返回首页</a>
+
+    <a href="https://netlifyabc.github.io/A-My-Netlify-Project-2.0PRO/public/register.html" class="btn-primary" role="button">返回首页</a>
 
   </main>
 
   <footer>&copy; 2025 YourShop. 精致生活，从这里开始。</footer> 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+
+ document.addEventListener('DOMContentLoaded', function() {
+  // 请替换成你的店铺域名和访问令牌（不要公开令牌，生产请用后端代理）
+  const SHOPIFY_STORE_DOMAIN = 'yourstore.myshopify.com'; // 例如 myshop.myshopify.com
+  const STORE_FRONT_ACCESS_TOKEN = 'your_storefront_access_token';
+
+  const GRAPHQL_URL = `https://${SHOPIFY_STORE_DOMAIN}/api/2023-07/graphql.json`; 
+
   // “返回首页”按钮点击事件
   document.querySelector('a.btn-primary').addEventListener('click', function(event) {
     event.preventDefault();
@@ -370,7 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
       FULFILLED: '<span class="order-status-tag fulfilled">已发货</span>',
       UNFULFILLED: '<span class="order-status-tag unfulfilled">待发货</span>',
       PARTIALLY_FULFILLED: '<span class="order-status-tag partial">部分发货</span>',
-      // 你可以补充其他状态
     };
     return statusMap[status] || `<span class="order-status-tag unknown">${status}</span>`;
   }
@@ -396,27 +403,27 @@ document.addEventListener('DOMContentLoaded', function() {
       li.style.setProperty('--delay', `${index * 0.1}s`);
 
       // 构建商品列表，带缩略图和数量
-      const lineItemsHtml = (order.lineItems?.edges || []).map(edge => {
+      const lineItemsHtml = (order.lineItems.edges || []).map(edge => {
         const item = edge.node;
-        const thumb = item.thumbnail
-          ? `<img class="product-thumb" src="${item.thumbnail}" alt="${item.title} 缩略图" style="width:40px;height:40px;object-fit:cover;margin-right:8px;vertical-align:middle;">`
+        const thumb = item.variant.image
+          ? `<img class="product-thumb" src="${item.variant.image.src}" alt="${item.title} 缩略图">`
           : '';
         return `<li>${thumb}${item.title} × ${item.quantity}</li>`;
       }).join('');
 
       li.innerHTML = `
         <div class="order-id">订单号：${order.name || order.orderNumber || '未知'}</div>
-        <div class="order-info">下单时间：${formatDate(order.processedAt || order.createdAt)}</div>
+        <div class="order-info">下单时间：${formatDate(order.processedAt)}</div>
         <div class="order-info">状态：${mapStatus(order.fulfillmentStatus)}</div>
-        <div class="order-info">总金额：${order.totalPriceV2?.amount || order.total || '?'} ${order.totalPriceV2?.currencyCode || order.currency || ''}</div>
+        <div class="order-info">总金额：${order.currentTotalPrice.amount} ${order.currentTotalPrice.currencyCode}</div>
         <ul>${lineItemsHtml}</ul>
         <button class="view-details-btn" type="button" aria-label="查看订单 ${order.name || order.orderNumber || '未知'} 详情">查看详情</button>
       `;
 
-      // 点击“查看详情”按钮跳转
       const btn = li.querySelector('.view-details-btn');
       btn.addEventListener('click', () => {
-        const url = order.url || `/order-details.html?order=${encodeURIComponent(order.name || order.orderNumber || '')}`;
+        // 跳转示例，实际根据你项目修改URL
+        const url = `/order-details.html?order=${encodeURIComponent(order.name || order.orderNumber || '')}`;
         window.location.href = url;
       });
 
@@ -424,53 +431,86 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  (function () {
+  async function fetchOrders() {
+    const query = `
+      query {
+        customer {
+          orders(first: 10, sortKey: PROCESSED_AT, reverse: true) {
+            edges {
+              node {
+                id
+                name
+                orderNumber
+                processedAt
+                fulfillmentStatus
+                currentTotalPrice {
+                  amount
+                  currencyCode
+                }
+                lineItems(first: 10) {
+                  edges {
+                    node {
+                      title
+                      quantity
+                      variant {
+                        image {
+                          src
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    const response = await fetch(`https://${SHOPIFY_STORE_DOMAIN}/api/2023-07/graphql.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': STORE_FRONT_ACCESS_TOKEN,
+      },
+      body: JSON.stringify({ query }),
+      credentials: 'include'  // 需要认证用户cookie，确保用户已登录
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    if (json.errors) {
+      throw new Error('GraphQL error: ' + JSON.stringify(json.errors));
+    }
+
+    const orders = json.data.customer?.orders?.edges.map(edge => edge.node) || [];
+    return orders;
+  }
+
+  (async function() {
     const loadingMsg = document.getElementById('loadingMsg');
 
     hideMessage();
     loadingMsg.style.display = 'block';
 
-    // 这里直接使用模拟订单数据，方便测试
-    const orders = [
-      {
-        name: "ORDER-001",
-        orderNumber: "001",
-        processedAt: "2025-07-31T10:30:00Z",
-        fulfillmentStatus: "FULFILLED",
-        totalPriceV2: { amount: "299.00", currencyCode: "CNY" },
-        lineItems: {
-          edges: [
-            { node: { title: "商品A", quantity: 1, thumbnail: "https://via.placeholder.com/40" } },
-            { node: { title: "商品B", quantity: 2, thumbnail: "https://via.placeholder.com/40" } },
-          ]
-        },
-        url: "https://example.com/order-details/001"
-      },
-      {
-        name: "ORDER-002",
-        orderNumber: "002",
-        processedAt: "2025-07-30T15:45:00Z",
-        fulfillmentStatus: "UNFULFILLED",
-        totalPriceV2: { amount: "150.00", currencyCode: "CNY" },
-        lineItems: {
-          edges: [
-            { node: { title: "商品C", quantity: 1, thumbnail: "https://via.placeholder.com/40" } }
-          ]
-        }
-      }
-    ];
-
     try {
+      const orders = await fetchOrders();
       renderOrders(orders);
+      if (orders.length === 0) {
+        showMessage('您暂无订单，赶快去购物吧！', false);
+      }
     } catch (err) {
-      console.error('订单渲染失败:', err);
-      showMessage('订单数据异常，无法显示。');
+      console.error('订单加载失败:', err);
+      showMessage('抱歉，系统暂时无法加载您的订单。\n请返回首页，点击“我的订单”重新进入看看吧。');
     } finally {
       loadingMsg.style.display = 'none';
     }
   })();
+
 });
 </script>
-
 </body>
 </html> 
