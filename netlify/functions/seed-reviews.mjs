@@ -39,14 +39,14 @@ async function shopifyAdminFetch(query, variables = {}) {
   return json.data;
 }
 
-// ⭐️ 示例启动期评论数据，带头像、变体信息和固定日期
+// ⭐️ 示例启动期评论数据，使用固定头像 URL
 const seedReviews = [
   {
     name: 'Alice L.',
     rating: 5,
     content: 'Absolutely love the design and comfort. Highly recommended!',
     date: '2025-07-22',
-    avatar: 'https://i.pravatar.cc/48?u=alice',
+    avatar: 'https://i.pravatar.cc/48?u=1',
     variant: 'Pearl White',
   },
   {
@@ -54,7 +54,7 @@ const seedReviews = [
     rating: 4,
     content: 'Good value for money. A bit firm but great support.',
     date: '2025-07-16',
-    avatar: 'https://i.pravatar.cc/48?u=ben',
+    avatar: 'https://i.pravatar.cc/48?u=2',
     variant: 'Shadow Gray',
   },
   {
@@ -62,7 +62,7 @@ const seedReviews = [
     rating: 5,
     content: 'Bought it for my studio – it looks amazing!',
     date: '2025-06-30',
-    avatar: 'https://i.pravatar.cc/48?u=clara',
+    avatar: 'https://i.pravatar.cc/48?u=3',
     variant: 'Emerald Green',
   },
 ];

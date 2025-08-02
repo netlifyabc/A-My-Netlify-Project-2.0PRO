@@ -983,28 +983,28 @@ body {
       container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
     }
   }
+// ✅ 日期格式化为 "July 22, 2025"
+function formatDate(isoDate) {
+  if (!isoDate) return '';
+  const parsed = new Date(isoDate);
+  if (isNaN(parsed.getTime())) return ''; // 防止非法日期
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return parsed.toLocaleDateString('en-US', options);
+}
 
-  // 日期格式化为 "July 22, 2025"
-  function formatDate(isoDate) {
-    if (!isoDate) return '';
-    const date = new Date(isoDate);
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
-  }
+// ✅ 防止 XSS 注入
+function escapeHTML(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;',
+    '"': '&quot;', "'": '&#39;'
+  })[m]);
+}
 
-  // 防止 XSS 注入
-  function escapeHTML(str) {
-    return String(str || '').replace(/[&<>"']/g, m => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;',
-      '"': '&quot;', "'": '&#39;'
-    })[m]);
-  }
+// ✅ 页面加载时自动调用
+loadReviews();
 
-  // 页面加载时自动调用
-  loadReviews();
-
-
-  function renderRatingSummary(avgRating, totalReviews) {
+// ✅ 星级评分汇总渲染（Amazon 风格）
+function renderRatingSummary(avgRating, totalReviews) {
   const container = document.getElementById('ratingSummary');
   if (!container) return;
 
@@ -1013,7 +1013,7 @@ body {
   const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
 
   const full = '★'.repeat(fullStars);
-  const half = hasHalf ? '⯨' : '';
+  const half = hasHalf ? '⯨' : ''; // 可用 SVG 或替代字符自定义样式
   const empty = '☆'.repeat(emptyStars);
 
   const stars = full + half + empty;
@@ -1024,8 +1024,8 @@ body {
   `;
 }
 
+// ✅ 示例调用（静态数据测试）
 renderRatingSummary(4.8, 266);
-
 
 </script> 
 </body>
