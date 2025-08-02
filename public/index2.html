@@ -539,9 +539,15 @@ body {
     } 
 
 
-      .reviews .review {
-    margin-bottom: 1rem;
-  }
+    .review .rating {
+  color: #fbc02d;
+  font-size: 1.1rem;
+}
+
+.review img.rounded-circle {
+  border: 1px solid #ddd;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
 
   .reviews .review strong {
     display: inline-block;
@@ -594,7 +600,6 @@ body {
   font-weight: 600;
   text-shadow: 0 0 2px rgba(255, 164, 28, 0.8);
 }
-
   </style>
 </head>
 
@@ -686,12 +691,55 @@ body {
         </div>
       </div>
      
-<!-- 评价区（动态） -->
-<div class="col-12 mt-5 reviews" id="reviewsContainer"> 
-  <h4>Customer Reviews</h4>
-  <div>Loading reviews...</div> 
-</div>
+<  <!-- 评论列表 -->
+  <div class="row g-4 mt-3">
+    <!-- 每条评论组件 -->
+    <div class="col-12">
+      <div class="d-flex align-items-start gap-3 border-bottom pb-4">
+        <img src="https://i.pravatar.cc/48?u=1" class="rounded-circle" width="48" height="48" alt="Jane D." />
+        <div>
+          <div class="d-flex align-items-center mb-1">
+            <strong class="me-2">Jane D.</strong>
+            <div class="text-warning small">★★★★★</div>
+            <span class="text-muted ms-2 small">Verified Buyer</span>
+          </div>
+          <p class="mb-1">Very comfortable and stylish. Perfect for my home office!</p>
+          <div class="text-muted small">Color: Classic Gray · 2025-07-22</div>
+        </div>
+      </div>
+    </div>
 
+    <div class="col-12">
+      <div class="d-flex align-items-start gap-3 border-bottom pb-4">
+        <img src="https://i.pravatar.cc/48?u=2" class="rounded-circle" width="48" height="48" alt="Mark S." />
+        <div>
+          <div class="d-flex align-items-center mb-1">
+            <strong class="me-2">Mark S.</strong>
+            <div class="text-warning small">★★★★☆</div>
+            <span class="text-muted ms-2 small">Verified Buyer</span>
+          </div>
+          <p class="mb-1">Good chair for the price, adjustable height is a plus.</p>
+          <div class="text-muted small">Color: Navy Blue · 2025-07-16 </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="d-flex align-items-start gap-3">
+        <img src="https://i.pravatar.cc/48?u=3" class="rounded-circle" width="48" height="48" alt="Lisa K." />
+        <div>
+          <div class="d-flex align-items-center mb-1">
+            <strong class="me-2">Lisa K.</strong>
+            <div class="text-warning small">★★★★★</div>
+            <span class="text-muted ms-2 small">Verified Buyer</span>
+          </div>
+          <p class="mb-1">Love the velvet texture and color options!</p>
+          <div class="text-muted small">Color: Emerald Green · 2025-06-30</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
 
       <!-- 相关产品 -->
       <div class="col-12 mt-5 related">
@@ -942,7 +990,7 @@ const seedReviews = [
     rating: 5,
     content: 'Absolutely love the design and comfort. Highly recommended!',
     date: '2025-07-22',
-    avatar: 'https://i.pravatar.cc/48?u=10',
+    avatar: 'https://i.pravatar.cc/48?u=1',
     variant: 'Pearl White',
   },
   {
@@ -950,7 +998,7 @@ const seedReviews = [
     rating: 4,
     content: 'Good value for money. A bit firm but great support.',
     date: '2025-07-16',
-    avatar: 'https://i.pravatar.cc/48?u=11',
+    avatar: 'https://i.pravatar.cc/48?u=2',
     variant: 'Shadow Gray',
   },
   {
@@ -958,7 +1006,7 @@ const seedReviews = [
     rating: 5,
     content: 'Bought it for my studio – it looks amazing!',
     date: '2025-06-30',
-    avatar: 'https://i.pravatar.cc/48?u=12',
+    avatar: 'https://i.pravatar.cc/48?u=3',
     variant: 'Emerald Green',
   },
 ];
