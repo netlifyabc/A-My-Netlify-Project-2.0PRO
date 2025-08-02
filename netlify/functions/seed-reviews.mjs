@@ -39,22 +39,26 @@ async function shopifyAdminFetch(query, variables = {}) {
   return json.data;
 }
 
-// ⭐️ 示例评论数据
+// ⭐️ 示例启动期评论数据，带固定日期（格式：YYYY-MM-DD）
 const seedReviews = [
   {
     name: 'Alice L.',
     rating: 5,
     content: 'Absolutely love the design and comfort. Highly recommended!',
+    date: '2025-07-22', // 固定示例日期
   },
   {
     name: 'Ben W.',
     rating: 4,
     content: 'Good value for money. A bit firm but great support.',
+
+    date: '2025-07-16',
   },
   {
     name: 'Clara G.',
     rating: 5,
     content: 'Bought it for my studio – it looks amazing!',
+    date: '2025-06-30',
   },
 ];
 
@@ -98,6 +102,7 @@ exports.handler = async (event) => {
       }
     }
 
+    // 这里合并现有评论和启动期示例评论
     const newReviews = [...existingReviews, ...seedReviews];
 
     // 使用 productUpdate 更新 metafield
@@ -161,6 +166,5 @@ exports.handler = async (event) => {
       headers: CORS_HEADERS,
       body: JSON.stringify({ error: err.message }),
     };
-    
   }
 }; 
