@@ -937,53 +937,52 @@ body {
 
 // ③-8 加载评论数据并渲染
 
-  async function loadReviews() {
-    const container = document.getElementById('reviewsContainer');
-    if (!container) return;
+async function loadReviews() {
+  const container = document.getElementById('reviewsContainer');
+  if (!container) return;
 
-    try {
-      const res = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/get-reviews');
-      const json = await res.json();
+  try {
+    const res = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/get-reviews');
+    const json = await res.json();
 
-      if (!json.reviews || !Array.isArray(json.reviews)) {
-        container.innerHTML = '<p>No reviews available.</p>';
-        return;
-      }
-
-      // 清空旧内容
-      container.innerHTML = '<h4>Customer Reviews</h4>';
-
-      json.reviews.forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'mb-4';
-
-        const stars = '★'.repeat(Math.max(0, Math.min(5, r.rating || 0))).padEnd(5, '☆');
-        const formattedDate = formatDate(r.date);
-        const avatar = escapeHTML(r.avatar || `https://i.pravatar.cc/48?u=${encodeURIComponent(r.name)}`);
-       const variant = (r.variant && r.variant.trim()) ? escapeHTML(r.variant) : 'Lavender'; 
-
-
-        div.innerHTML = `
-          <div class="d-flex align-items-start gap-3">
-            <img src="${avatar}" class="rounded-circle" width="48" height="48" alt="${escapeHTML(r.name)}" />
-            <div>
-              <div class="d-flex align-items-center mb-1">
-                <strong class="me-2">${escapeHTML(r.name)}</strong>
-                <div class="text-warning small">${stars}</div>
-                <span class="text-muted ms-2 small">Verified Buyer</span>
-              </div>
-              <p class="mb-1">${escapeHTML(r.content)}</p>
-              <div class="text-muted small">Color: ${variant} · ${formattedDate}</div>
-            </div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    } catch (err) {
-      console.error('❌ Failed to load reviews:', err);
-      container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
+    if (!json.reviews || !Array.isArray(json.reviews)) {
+      container.innerHTML = '<p>No reviews available.</p>';
+      return;
     }
+
+    // 清空旧内容
+    container.innerHTML = '<h4>Customer Reviews</h4>';
+
+    json.reviews.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'mb-4';
+
+      const stars = '★'.repeat(Math.max(0, Math.min(5, r.rating || 0))).padEnd(5, '☆');
+      const formattedDate = formatDate(r.date);
+      const avatar = escapeHTML(r.avatar || `https://i.pravatar.cc/48?u=${encodeURIComponent(r.name)}`);
+      const variant = (r.variant && r.variant.trim()) ? escapeHTML(r.variant) : 'Lavender';
+
+      div.innerHTML = `
+        <div class="d-flex align-items-start gap-3">
+          <img src="${avatar}" class="rounded-circle" width="48" height="48" alt="${escapeHTML(r.name)}" />
+          <div>
+            <div class="d-flex align-items-center mb-1">
+              <strong class="me-2">${escapeHTML(r.name)}</strong>
+              <div class="text-warning small">${stars}</div>
+              <span class="text-muted ms-2 small">Verified Buyer</span>
+            </div>
+            <p class="mb-1">${escapeHTML(r.content)}</p>
+            <div class="text-muted small">Color: ${variant} · ${formattedDate}</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  } catch (err) {
+    console.error('❌ Failed to load reviews:', err);
+    container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
   }
+}
 
 // ✅ 日期格式化为 "July 22, 2025"
 function formatDate(isoDate) {
@@ -1002,8 +1001,9 @@ function escapeHTML(str) {
   })[m]);
 }
 
-// ✅ 页面加载时自动调用
+// 页面加载时自动调用
 loadReviews();
+
 
 // ✅ 星级评分汇总渲染（Amazon 风格）
 function renderRatingSummary(avgRating, totalReviews) {
@@ -1031,4 +1031,6 @@ renderRatingSummary(4.8, 266);
 
 </script> 
 </body>
-</html> 
+
+
+</html>  
