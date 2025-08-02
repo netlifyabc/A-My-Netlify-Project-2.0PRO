@@ -46,7 +46,7 @@ const seedReviews = [
     rating: 5,
     content: 'Absolutely love the design and comfort. Highly recommended!',
     date: '2025-07-22',
-    avatar: 'https://i.pravatar.cc/48?u=1',
+    avatar: 'https://i.pravatar.cc/48?u=10',
     variant: 'Pearl White',
   },
   {
@@ -54,7 +54,7 @@ const seedReviews = [
     rating: 4,
     content: 'Good value for money. A bit firm but great support.',
     date: '2025-07-16',
-    avatar: 'https://i.pravatar.cc/48?u=2',
+    avatar: 'https://i.pravatar.cc/48?u=11',
     variant: 'Shadow Gray',
   },
   {
@@ -62,7 +62,7 @@ const seedReviews = [
     rating: 5,
     content: 'Bought it for my studio – it looks amazing!',
     date: '2025-06-30',
-    avatar: 'https://i.pravatar.cc/48?u=3',
+    avatar: 'https://i.pravatar.cc/48?u=12',
     variant: 'Emerald Green',
   },
 ];
