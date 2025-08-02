@@ -625,23 +625,14 @@ body {
           </dl>
         </div>
       </div>
+     
 
-      <!-- 评价区 -->
-      <div class="col-12 mt-5 reviews">
-        <h4>Customer Reviews (266)</h4>
-        <div class="review border-bottom py-3">
-          <strong>Jane D.</strong> <span class="text-muted">– 5 stars</span>
-          <p>Very comfortable and stylish. Perfect for my home office!</p>
-        </div>
-        <div class="review border-bottom py-3">
-          <strong>Mark S.</strong> <span class="text-muted">– 4 stars</span>
-          <p>Good chair for the price, adjustable height is a plus.</p>
-        </div>
-        <div class="review py-3">
-          <strong>Lisa K.</strong> <span class="text-muted">– 5 stars</span>
-          <p>Love the velvet texture and color options!</p>
-        </div>
-      </div>
+       <!-- 评价区（动态） -->
+<div class="col-12 mt-5 reviews">
+  <h4>Customer Reviews</h4>
+  <div id="reviewsContainer">Loading reviews...</div>
+</div>
+
 
       <!-- 相关产品 -->
       <div class="col-12 mt-5 related">
@@ -883,14 +874,66 @@ body {
   closeDrawer.addEventListener('click', () => {
     drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden', 'true');
-  });
+  }); 
+
+
+  // ③-8 加载评论数据并渲染
+async function loadReviews() {
+  const container = document.getElementById('reviewsContainer');
+  if (!container) return;
+
+  try {
+    const res = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/get-reviews');
+    const json = await res.json();
+
+    if (!json.reviews || !Array.isArray(json.reviews)) {
+      container.innerHTML = '<p>No reviews available.</p>';
+      return;
+    }
+
+    // 清空并插入每条评论
+    container.innerHTML = '';
+    json.reviews.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'review border-bottom py-3';
+
+      const formattedDate = formatDate(r.date);
+
+      div.innerHTML = `
+        <strong>${escapeHTML(r.name)}</strong> 
+        <span class="text-muted">– ${r.rating} stars</span>
+        <p>${escapeHTML(r.content)}</p>
+        <div style="font-size: 13px;" class="text-muted">
+          Reviewed in the United States on ${formattedDate}
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  } catch (err) {
+    console.error('❌ Failed to load reviews:', err);
+    container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
+  }
+}
+
+// 日期格式化为 "July 22, 2025"
+function formatDate(isoDate) {
+  if (!isoDate) return '';
+  const date = new Date(isoDate);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
+}
+
+// 防止 XSS 注入
+function escapeHTML(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;',
+    '"': '&quot;', "'": '&#39;'
+  })[m]);
+}
+
+// 调用加载函数
+loadReviews();
+
 </script> 
-
-
-
-
-
-
-
 </body>
 </html> 
