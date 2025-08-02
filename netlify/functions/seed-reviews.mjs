@@ -1,5 +1,3 @@
-// netlify/functions/seed-reviews.mjs
-
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
@@ -31,13 +29,15 @@ async function shopifyAdminFetch(query, variables = {}) {
   const json = await res.json();
 
   if (!res.ok || json.errors) {
-    console.error('❌ Shopify Error:', json.errors || res.statusText);
-    throw new Error('Shopify API error');
+    const message = json.errors?.map(err => err.message).join('; ') || res.statusText;
+    console.error('❌ Shopify API Error:', message);
+    throw new Error(message);
   }
 
   return json.data;
 }
 
+// ⭐️ 示例评论数据
 const seedReviews = [
   {
     name: 'Alice L.',
@@ -56,7 +56,8 @@ const seedReviews = [
   },
 ];
 
-const PRODUCT_ID = 'gid://shopify/Product/15059429687620'; // 👈 替换为你的产品 ID
+// 👇 替换为实际的 product GID（注意不是 variant）
+const PRODUCT_ID = 'gid://shopify/Product/15059429687620';
 
 const REVIEW_METAFIELD_NAMESPACE = 'custom';
 const REVIEW_METAFIELD_KEY = 'reviews';
@@ -71,7 +72,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    const existing = await shopifyAdminFetch(`
+    // 查询是否已有评论
+    const existing = await shopifyAdminFetch(
+      `
       query getProductMetafields($id: ID!) {
         product(id: $id) {
           metafield(namespace: "${REVIEW_METAFIELD_NAMESPACE}", key: "${REVIEW_METAFIELD_KEY}") {
@@ -80,7 +83,9 @@ exports.handler = async (event) => {
           }
         }
       }
-    `, { id: PRODUCT_ID });
+    `,
+      { id: PRODUCT_ID }
+    );
 
     let existingReviews = [];
     let metafieldId = null;
@@ -92,6 +97,7 @@ exports.handler = async (event) => {
 
     const newReviews = [...existingReviews, ...seedReviews];
 
+    // 构造 mutation
     const mutation = metafieldId
       ? `
         mutation UpdateMetafield($metafield: MetafieldInput!) {
@@ -124,12 +130,14 @@ exports.handler = async (event) => {
 
     const mutationInput = {
       metafield: {
-        ...(metafieldId ? { id: metafieldId } : {
-          ownerId: PRODUCT_ID,
-          namespace: REVIEW_METAFIELD_NAMESPACE,
-          key: REVIEW_METAFIELD_KEY,
-          type: 'json',
-        }),
+        ...(metafieldId
+          ? { id: metafieldId }
+          : {
+              ownerId: PRODUCT_ID,
+              namespace: REVIEW_METAFIELD_NAMESPACE,
+              key: REVIEW_METAFIELD_KEY,
+              type: 'json',
+            }),
         value: JSON.stringify(newReviews),
       },
     };
@@ -142,6 +150,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, added: seedReviews.length }),
     };
   } catch (err) {
+    console.error('❌ Function Error:', err.message);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
