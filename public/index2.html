@@ -960,7 +960,7 @@ body {
         const stars = '★'.repeat(Math.max(0, Math.min(5, r.rating || 0))).padEnd(5, '☆');
         const formattedDate = formatDate(r.date);
         const avatar = escapeHTML(r.avatar || `https://i.pravatar.cc/48?u=${encodeURIComponent(r.name)}`);
-        const variant = r.variant ? escapeHTML(r.variant) : 'N/A';
+        const variant = (r.variant && r.variant.trim()) ? escapeHTML(r.variant) : 'N/A'; 
 
         div.innerHTML = `
           <div class="d-flex align-items-start gap-3">
@@ -983,6 +983,7 @@ body {
       container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
     }
   }
+
 // ✅ 日期格式化为 "July 22, 2025"
 function formatDate(isoDate) {
   if (!isoDate) return '';
