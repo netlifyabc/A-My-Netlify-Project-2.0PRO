@@ -77,14 +77,14 @@ exports.handler = async (event) => {
         const parsed = JSON.parse(data.product.metafield.value);
         if (Array.isArray(parsed)) {
          // 只做数据解析，原始数据直接传递
-    reviews = parsed.map(r => ({
-    name: r.name || 'Anonymous',
-    rating: r.rating || 0,
-    content: r.content || '',
-    date: r.date || '',        // 原始日期字符串，前端格式化
-    variant: r.variant || '',  // 传递颜色字段
-}));
-
+  reviews = parsed.map(r => ({
+  name: r.name || 'Anonymous',
+  rating: r.rating || 0,
+  content: r.content || '',
+  date: r.date || '', // 保持原始 ISO 字符串
+  avatar: r.avatar || '',
+  variant: r.variant || '',
+})); 
         }
       } catch (e) {
         console.warn('⚠️ Failed to parse metafield JSON:', e.message);

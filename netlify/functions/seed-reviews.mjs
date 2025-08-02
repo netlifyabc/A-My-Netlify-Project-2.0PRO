@@ -18,28 +18,7 @@ if (!SHOPIFY_DOMAIN || !API_VERSION || !ADMIN_TOKEN) {
 
 const endpoint = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/graphql.json`;
 
-async function shopifyAdminFetch(query, variables = {}) {
-  const res = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': ADMIN_TOKEN,
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  const json = await res.json();
-
-  if (!res.ok || json.errors) {
-    const message = json.errors?.map(err => err.message).join('; ') || res.statusText;
-    console.error('❌ Shopify API Error:', message);
-    throw new Error(message);
-  }
-
-  return json.data;
-}
-
-// ⭐️ 示例启动期评论数据，使用固定头像 URL
+// 示例启动期评论数据
 const seedReviews = [
   {
     name: 'Alice L.',
@@ -67,8 +46,28 @@ const seedReviews = [
   },
 ];
 
+async function shopifyAdminFetch(query, variables = {}) {
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': ADMIN_TOKEN,
+    },
+    body: JSON.stringify({ query, variables }),
+  });
 
-// 👇 替换为实际 Product GID（注意不是 Variant ID）
+  const json = await res.json();
+
+  if (!res.ok || json.errors) {
+    const message = json.errors?.map(err => err.message).join('; ') || res.statusText;
+    console.error('❌ Shopify API Error:', message);
+    throw new Error(message);
+  }
+
+  return json.data;
+}
+
+// 👇 替换为你的产品 GID
 const PRODUCT_ID = 'gid://shopify/Product/15059429687620';
 
 const REVIEW_METAFIELD_NAMESPACE = 'custom';
@@ -84,7 +83,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 先查现有 metafield（如有）
+    // 查询现有 metafield
     const existing = await shopifyAdminFetch(
       `
       query getProductMetafields($id: ID!) {
@@ -95,7 +94,7 @@ exports.handler = async (event) => {
           }
         }
       }
-    `,
+      `,
       { id: PRODUCT_ID }
     );
 
@@ -108,10 +107,10 @@ exports.handler = async (event) => {
       }
     }
 
-    // 这里合并现有评论和启动期示例评论
+    // 合并已有评论和启动示例评论
     const newReviews = [...existingReviews, ...seedReviews];
 
-    // 使用 productUpdate 更新 metafield
+    // 更新 metafield
     const mutation = `
       mutation UpdateProductMetafields($input: ProductInput!) {
         productUpdate(input: $input) {
@@ -173,4 +172,5 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: err.message }),
     };
   }
-};  
+
+}; 

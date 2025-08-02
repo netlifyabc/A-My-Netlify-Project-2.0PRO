@@ -935,53 +935,91 @@ body {
     drawer.setAttribute('aria-hidden', 'true');
   }); 
 
-// ③-8 加载评论数据并渲染
+// ⭐️ 示例启动期评论数据，使用固定头像 URL
+const seedReviews = [
+  {
+    name: 'Alice L.',
+    rating: 5,
+    content: 'Absolutely love the design and comfort. Highly recommended!',
+    date: '2025-07-22',
+    avatar: 'https://i.pravatar.cc/48?u=10',
+    variant: 'Pearl White',
+  },
+  {
+    name: 'Ben W.',
+    rating: 4,
+    content: 'Good value for money. A bit firm but great support.',
+    date: '2025-07-16',
+    avatar: 'https://i.pravatar.cc/48?u=11',
+    variant: 'Shadow Gray',
+  },
+  {
+    name: 'Clara G.',
+    rating: 5,
+    content: 'Bought it for my studio – it looks amazing!',
+    date: '2025-06-30',
+    avatar: 'https://i.pravatar.cc/48?u=12',
+    variant: 'Emerald Green',
+  },
+];
 
+// ③-8 加载评论数据并渲染
 async function loadReviews() {
   const container = document.getElementById('reviewsContainer');
   if (!container) return;
+
+  let reviews = [];
 
   try {
     const res = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/get-reviews');
     const json = await res.json();
 
-    if (!json.reviews || !Array.isArray(json.reviews)) {
-      container.innerHTML = '<p>No reviews available.</p>';
-      return;
+    if (json.reviews && Array.isArray(json.reviews) && json.reviews.length > 0) {
+      reviews = json.reviews;
+    } else {
+      // 接口没数据时用 seedReviews 作为后备
+      reviews = seedReviews;
+      console.info('⚠️ Using seedReviews fallback data');
     }
-
-    // 清空旧内容
-    container.innerHTML = '<h4>Customer Reviews</h4>';
-
-    json.reviews.forEach(r => {
-      const div = document.createElement('div');
-      div.className = 'mb-4';
-
-      const stars = '★'.repeat(Math.max(0, Math.min(5, r.rating || 0))).padEnd(5, '☆');
-      const formattedDate = formatDate(r.date);
-      const avatar = escapeHTML(r.avatar || `https://i.pravatar.cc/48?u=${encodeURIComponent(r.name)}`);
-      const variant = (r.variant && r.variant.trim()) ? escapeHTML(r.variant) : 'Lavender';
-
-      div.innerHTML = `
-        <div class="d-flex align-items-start gap-3">
-          <img src="${avatar}" class="rounded-circle" width="48" height="48" alt="${escapeHTML(r.name)}" />
-          <div>
-            <div class="d-flex align-items-center mb-1">
-              <strong class="me-2">${escapeHTML(r.name)}</strong>
-              <div class="text-warning small">${stars}</div>
-              <span class="text-muted ms-2 small">Verified Buyer</span>
-            </div>
-            <p class="mb-1">${escapeHTML(r.content)}</p>
-            <div class="text-muted small">Color: ${variant} · ${formattedDate}</div>
-          </div>
-        </div>
-      `;
-      container.appendChild(div);
-    });
   } catch (err) {
     console.error('❌ Failed to load reviews:', err);
-    container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
+    // 接口请求失败时用 seedReviews 作为后备
+    reviews = seedReviews;
   }
+
+  if (reviews.length === 0) {
+    container.innerHTML = '<p>No reviews available.</p>';
+    return;
+  }
+
+  // 清空旧内容
+  container.innerHTML = '<h4>Customer Reviews</h4>';
+
+  reviews.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'mb-4';
+
+    const stars = '★'.repeat(Math.max(0, Math.min(5, r.rating || 0))).padEnd(5, '☆');
+    const formattedDate = formatDate(r.date);
+    const avatar = escapeHTML(r.avatar || `https://i.pravatar.cc/48?u=${encodeURIComponent(r.name)}`);
+    const variant = (r.variant && r.variant.trim()) ? escapeHTML(r.variant) : 'Lavender';
+
+    div.innerHTML = `
+      <div class="d-flex align-items-start gap-3">
+        <img src="${avatar}" class="rounded-circle" width="48" height="48" alt="${escapeHTML(r.name)}" />
+        <div>
+          <div class="d-flex align-items-center mb-1">
+            <strong class="me-2">${escapeHTML(r.name)}</strong>
+            <div class="text-warning small">${stars}</div>
+            <span class="text-muted ms-2 small">Verified Buyer</span>
+          </div>
+          <p class="mb-1">${escapeHTML(r.content)}</p>
+          <div class="text-muted small">Color: ${variant} · ${formattedDate}</div>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
 }
 
 // ✅ 日期格式化为 "July 22, 2025"
@@ -1004,7 +1042,6 @@ function escapeHTML(str) {
 // 页面加载时自动调用
 loadReviews();
 
-
 // ✅ 星级评分汇总渲染（Amazon 风格）
 function renderRatingSummary(avgRating, totalReviews) {
   const container = document.getElementById('ratingSummary');
@@ -1026,8 +1063,9 @@ function renderRatingSummary(avgRating, totalReviews) {
   `;
 }
 
-// ✅ 示例调用（静态数据测试）
+// 示例调用（静态数据测试）
 renderRatingSummary(4.8, 266);
+
 
 </script> 
 </body>
