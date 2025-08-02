@@ -564,6 +564,37 @@ body {
     color: #666;
   } 
 
+.rating-summary .stars {
+  font-size: 1.5rem;
+  letter-spacing: 0.03rem;
+  line-height: 1;
+  display: inline-block;
+  color: #ffa41c;
+  background: linear-gradient(90deg, #ffb94e, #ff9900);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.08);   /* 仅保留非常轻微的阴影 */
+  font-weight: 600;
+}
+
+.rating-summary .text-muted {
+  font-size: 0.95rem;
+  color: #555 !important;
+  margin-left: 0.35rem;              /* 间距略微调整 */
+  vertical-align: middle;
+  font-family: "Amazon Ember", Arial, sans-serif; /* 亚马逊字体风格 */
+  font-weight: 500;
+}
+
+/* 备用的 .text-gold 类，保持颜色统一 */
+.text-gold {
+  color: #ffa41c;
+  font-weight: 600;
+  text-shadow: 0 0 2px rgba(255, 164, 28, 0.8);
+}
+
   </style>
 </head>
 
@@ -593,15 +624,17 @@ body {
           </div>
         </div>
       </div>
+<!-- 产品信息 -->
+<div class="col-md-6">
+  <h1 class="product-title">Bijander 35” Velvet Task Chair</h1>
+  <p class="product-sub">Comfortable velvet + adjustable height for home or office use</p>
 
-      <!-- 产品信息 -->
-      <div class="col-md-6">
-        <h1 class="product-title">Bijander 35” Velvet Task Chair</h1>
-        <p class="product-sub">Comfortable velvet + adjustable height for home or office use</p>
-        <div class="d-flex align-items-center mt-2">
-          <div class="rating">★★★★★</div><span>(266 Reviews)</span>
-        </div>
-        <div class="price">$349.00</div>
+  <!-- 星级摘要（动态填充） -->
+  <div id="ratingSummary" class="rating-summary d-flex flex-column mt-2"></div> 
+
+
+  <div class="price mt-2">$349.00</div>
+
 
         <div class="mt-4">
           <label class="variant-label" for="variantSelect">Color</label>
@@ -653,9 +686,8 @@ body {
         </div>
       </div>
      
-
-       <!-- 评价区（动态） -->
-<div class="col-12 mt-5 reviews" id="reviewContainer"> 
+<!-- 评价区（动态） -->
+<div class="col-12 mt-5 reviews" id="reviewsContainer"> 
   <h4>Customer Reviews</h4>
   <div>Loading reviews...</div> 
 </div>
@@ -904,63 +936,95 @@ body {
   }); 
 
 // ③-8 加载评论数据并渲染
-async function loadReviews() {
-  const container = document.getElementById('reviewsContainer');
+
+  async function loadReviews() {
+    const container = document.getElementById('reviewsContainer');
+    if (!container) return;
+
+    try {
+      const res = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/get-reviews');
+      const json = await res.json();
+
+      if (!json.reviews || !Array.isArray(json.reviews)) {
+        container.innerHTML = '<p>No reviews available.</p>';
+        return;
+      }
+
+      // 清空旧内容
+      container.innerHTML = '<h4>Customer Reviews</h4>';
+
+      json.reviews.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'mb-4';
+
+        const stars = '★'.repeat(Math.max(0, Math.min(5, r.rating || 0))).padEnd(5, '☆');
+        const formattedDate = formatDate(r.date);
+        const avatar = escapeHTML(r.avatar || `https://i.pravatar.cc/48?u=${encodeURIComponent(r.name)}`);
+        const variant = r.variant ? escapeHTML(r.variant) : 'N/A';
+
+        div.innerHTML = `
+          <div class="d-flex align-items-start gap-3">
+            <img src="${avatar}" class="rounded-circle" width="48" height="48" alt="${escapeHTML(r.name)}" />
+            <div>
+              <div class="d-flex align-items-center mb-1">
+                <strong class="me-2">${escapeHTML(r.name)}</strong>
+                <div class="text-warning small">${stars}</div>
+                <span class="text-muted ms-2 small">Verified Buyer</span>
+              </div>
+              <p class="mb-1">${escapeHTML(r.content)}</p>
+              <div class="text-muted small">Color: ${variant} · ${formattedDate}</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    } catch (err) {
+      console.error('❌ Failed to load reviews:', err);
+      container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
+    }
+  }
+
+  // 日期格式化为 "July 22, 2025"
+  function formatDate(isoDate) {
+    if (!isoDate) return '';
+    const date = new Date(isoDate);
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
+
+  // 防止 XSS 注入
+  function escapeHTML(str) {
+    return String(str || '').replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;',
+      '"': '&quot;', "'": '&#39;'
+    })[m]);
+  }
+
+  // 页面加载时自动调用
+  loadReviews();
+
+
+  function renderRatingSummary(avgRating, totalReviews) {
+  const container = document.getElementById('ratingSummary');
   if (!container) return;
 
-  try {
-    const res = await fetch('https://my-netlify-pro.netlify.app/.netlify/functions/get-reviews');
-    const json = await res.json();
+  const fullStars = Math.floor(avgRating);
+  const hasHalf = avgRating - fullStars >= 0.25 && avgRating - fullStars < 0.75;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
 
-    if (!json.reviews || !Array.isArray(json.reviews)) {
-      container.innerHTML = '<p>No reviews available.</p>';
-      return;
-    }
+  const full = '★'.repeat(fullStars);
+  const half = hasHalf ? '⯨' : '';
+  const empty = '☆'.repeat(emptyStars);
 
-    container.innerHTML = ''; // 清空旧内容
+  const stars = full + half + empty;
 
-    json.reviews.forEach(r => {
-      const div = document.createElement('div');
-      div.className = 'review border-bottom py-3';
-
-      const formattedDate = formatDate(r.date);
-      const starEmojis = '⭐'.repeat(Math.max(0, Math.min(5, r.rating || 0)));
-
-      div.innerHTML = `
-        <strong>${escapeHTML(r.name)}</strong> 
-        <span class="text-muted">– ${starEmojis}</span>
-        <p>${escapeHTML(r.content)}</p>
-        <div style="font-size: 13px;" class="text-muted">
-          Reviewed in the United States on ${formattedDate}
-        </div>
-      `;
-
-      container.appendChild(div);
-    });
-  } catch (err) {
-    console.error('❌ Failed to load reviews:', err);
-    container.innerHTML = '<p class="text-danger">Failed to load reviews.</p>';
-  }
+  container.innerHTML = `
+    <div class="text-gold stars">${stars}</div>
+    <div class="text-muted small">${avgRating.toFixed(1)} out of 5 stars · ${totalReviews.toLocaleString()} ratings</div>
+  `;
 }
 
-// 日期格式化为 "July 22, 2025"
-function formatDate(isoDate) {
-  if (!isoDate) return '';
-  const date = new Date(isoDate);
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return date.toLocaleDateString('en-US', options);
-}
-
-// 防止 XSS 注入
-function escapeHTML(str) {
-  return String(str || '').replace(/[&<>"']/g, m => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;',
-    '"': '&quot;', "'": '&#39;'
-  })[m]);
-}
-
-// 页面加载时自动调用
-loadReviews();
+renderRatingSummary(4.8, 266);
 
 
 </script> 

@@ -39,28 +39,34 @@ async function shopifyAdminFetch(query, variables = {}) {
   return json.data;
 }
 
-// ⭐️ 示例启动期评论数据，带固定日期（格式：YYYY-MM-DD）
+// ⭐️ 示例启动期评论数据，带头像、变体信息和固定日期
 const seedReviews = [
   {
     name: 'Alice L.',
     rating: 5,
     content: 'Absolutely love the design and comfort. Highly recommended!',
-    date: '2025-07-22', // 固定示例日期
+    date: '2025-07-22',
+    avatar: 'https://i.pravatar.cc/48?u=alice',
+    variant: 'Pearl White',
   },
   {
     name: 'Ben W.',
     rating: 4,
     content: 'Good value for money. A bit firm but great support.',
-
     date: '2025-07-16',
+    avatar: 'https://i.pravatar.cc/48?u=ben',
+    variant: 'Shadow Gray',
   },
   {
     name: 'Clara G.',
     rating: 5,
     content: 'Bought it for my studio – it looks amazing!',
     date: '2025-06-30',
+    avatar: 'https://i.pravatar.cc/48?u=clara',
+    variant: 'Emerald Green',
   },
 ];
+
 
 // 👇 替换为实际 Product GID（注意不是 Variant ID）
 const PRODUCT_ID = 'gid://shopify/Product/15059429687620';
