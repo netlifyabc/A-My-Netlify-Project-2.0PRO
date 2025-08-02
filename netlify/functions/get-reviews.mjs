@@ -77,6 +77,8 @@ exports.handler = async (event) => {
         const parsed = JSON.parse(data.product.metafield.value);
         if (Array.isArray(parsed)) {
          // 只做数据解析，原始数据直接传递
+
+        
   reviews = parsed.map(r => ({
   name: r.name || 'Anonymous',
   rating: r.rating || 0,

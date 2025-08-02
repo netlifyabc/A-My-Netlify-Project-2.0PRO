@@ -18,7 +18,7 @@ if (!SHOPIFY_DOMAIN || !API_VERSION || !ADMIN_TOKEN) {
 
 const endpoint = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/graphql.json`;
 
-// 示例启动期评论数据
+// 示例启动期评论数据（完整字段）
 const seedReviews = [
   {
     name: 'Alice L.',
@@ -83,34 +83,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 查询现有 metafield
-    const existing = await shopifyAdminFetch(
-      `
-      query getProductMetafields($id: ID!) {
-        product(id: $id) {
-          metafield(namespace: "${REVIEW_METAFIELD_NAMESPACE}", key: "${REVIEW_METAFIELD_KEY}") {
-            id
-            value
-          }
-        }
-      }
-      `,
-      { id: PRODUCT_ID }
-    );
-
-    let existingReviews = [];
-    if (existing?.product?.metafield?.value) {
-      try {
-        existingReviews = JSON.parse(existing.product.metafield.value);
-      } catch (e) {
-        console.warn('⚠️ Failed to parse existing reviews:', e.message);
-      }
-    }
-
-    // 合并已有评论和启动示例评论
-    const newReviews = [...existingReviews, ...seedReviews];
-
-    // 更新 metafield
+    // 这里不查询现有数据，直接覆盖写入示例评论
     const mutation = `
       mutation UpdateProductMetafields($input: ProductInput!) {
         productUpdate(input: $input) {
@@ -142,7 +115,7 @@ exports.handler = async (event) => {
             namespace: REVIEW_METAFIELD_NAMESPACE,
             key: REVIEW_METAFIELD_KEY,
             type: 'json',
-            value: JSON.stringify(newReviews),
+            value: JSON.stringify(seedReviews),
           },
         ],
       },
@@ -172,5 +145,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: err.message }),
     };
   }
+
 
 }; 
