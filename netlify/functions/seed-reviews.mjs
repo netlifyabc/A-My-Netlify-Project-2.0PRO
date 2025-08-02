@@ -1,3 +1,5 @@
+// netlify/functions/seed-reviews.mjs
+
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
@@ -56,7 +58,7 @@ const seedReviews = [
   },
 ];
 
-// 👇 替换为实际的 product GID（注意不是 variant）
+// 👇 替换为实际 Product GID（注意不是 Variant ID）
 const PRODUCT_ID = 'gid://shopify/Product/15059429687620';
 
 const REVIEW_METAFIELD_NAMESPACE = 'custom';
@@ -72,7 +74,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    // 查询是否已有评论
+    // 先查现有 metafield（如有）
     const existing = await shopifyAdminFetch(
       `
       query getProductMetafields($id: ID!) {
@@ -88,61 +90,64 @@ exports.handler = async (event) => {
     );
 
     let existingReviews = [];
-    let metafieldId = null;
-
-    if (existing?.product?.metafield) {
-      metafieldId = existing.product.metafield.id;
-      existingReviews = JSON.parse(existing.product.metafield.value || '[]');
+    if (existing?.product?.metafield?.value) {
+      try {
+        existingReviews = JSON.parse(existing.product.metafield.value);
+      } catch (e) {
+        console.warn('⚠️ Failed to parse existing reviews:', e.message);
+      }
     }
 
     const newReviews = [...existingReviews, ...seedReviews];
 
-    // 构造 mutation
-    const mutation = metafieldId
-      ? `
-        mutation UpdateMetafield($metafield: MetafieldInput!) {
-          metafieldUpdate(input: $metafield) {
-            metafield {
-              id
-              value
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `
-      : `
-        mutation CreateMetafield($metafield: MetafieldInput!) {
-          metafieldCreate(input: $metafield) {
-            metafield {
-              id
-              value
-            }
-            userErrors {
-              field
-              message
+    // 使用 productUpdate 更新 metafield
+    const mutation = `
+      mutation UpdateProductMetafields($input: ProductInput!) {
+        productUpdate(input: $input) {
+          product {
+            id
+            metafields(first: 5) {
+              edges {
+                node {
+                  id
+                  key
+                  value
+                }
+              }
             }
           }
+          userErrors {
+            field
+            message
+          }
         }
-      `;
+      }
+    `;
 
     const mutationInput = {
-      metafield: {
-        ...(metafieldId
-          ? { id: metafieldId }
-          : {
-              ownerId: PRODUCT_ID,
-              namespace: REVIEW_METAFIELD_NAMESPACE,
-              key: REVIEW_METAFIELD_KEY,
-              type: 'json',
-            }),
-        value: JSON.stringify(newReviews),
+      input: {
+        id: PRODUCT_ID,
+        metafields: [
+          {
+            namespace: REVIEW_METAFIELD_NAMESPACE,
+            key: REVIEW_METAFIELD_KEY,
+            type: 'json',
+            value: JSON.stringify(newReviews),
+          },
+        ],
       },
     };
 
     const result = await shopifyAdminFetch(mutation, mutationInput);
+
+    const errors = result?.productUpdate?.userErrors;
+    if (errors?.length) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'User error', details: errors }),
+      };
+    }
 
     return {
       statusCode: 200,
@@ -156,5 +161,6 @@ exports.handler = async (event) => {
       headers: CORS_HEADERS,
       body: JSON.stringify({ error: err.message }),
     };
+    
   }
 }; 
