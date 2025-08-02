@@ -56,7 +56,7 @@ const seedReviews = [
   },
 ];
 
-const PRODUCT_ID = 'gid://shopify/Product/8765432109876'; // 👈 替换为你的产品 ID
+const PRODUCT_ID = 'gid://shopify/ProductVariant/54634094526788'; // 👈 替换为你的产品 ID
 
 const REVIEW_METAFIELD_NAMESPACE = 'custom';
 const REVIEW_METAFIELD_KEY = 'reviews';
