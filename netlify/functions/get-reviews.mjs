@@ -12,7 +12,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
 };
 
-const PRODUCT_ID = 'gid://shopify/Product/15059429687620'; // 👈 替换为你的产品 ID
+const PRODUCT_ID = 'gid://shopify/Product/15059429687620'; // ✅ 替换为你的产品 GID
 const REVIEW_METAFIELD_NAMESPACE = 'custom';
 const REVIEW_METAFIELD_KEY = 'reviews';
 
@@ -41,6 +41,12 @@ async function shopifyAdminFetch(query, variables = {}) {
   }
 
   return json.data;
+}
+
+function formatDate(dateString) {
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  const date = dateString ? new Date(dateString) : new Date();
+  return date.toLocaleDateString('en-US', options); // e.g. August 2, 2025
 }
 
 exports.handler = async (event) => {
@@ -74,7 +80,7 @@ exports.handler = async (event) => {
             name: r.name || 'Anonymous',
             rating: r.rating || 0,
             content: r.content || '',
-            date: r.date || null // 有日期就显示，没有就留空
+            date: formatDate(r.date), // ✅ 格式化显示
           }));
         }
       } catch (e) {

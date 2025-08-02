@@ -536,7 +536,34 @@ body {
 
     #cartDrawer::-webkit-scrollbar-thumb:hover {
       background: #5E2DB1;
-    }
+    } 
+
+
+      .reviews .review {
+    margin-bottom: 1rem;
+  }
+
+  .reviews .review strong {
+    display: inline-block;
+    font-size: 1.1rem;
+  }
+
+  .reviews .text-muted {
+    margin-left: 8px;
+    font-size: 0.9rem;
+    color: #777 !important;
+  }
+
+  .reviews .review p {
+    margin: 0.5rem 0;
+  }
+
+  .reviews small {
+    display: block;
+    font-size: 0.85rem;
+    color: #666;
+  } 
+
   </style>
 </head>
 
@@ -628,9 +655,9 @@ body {
      
 
        <!-- 评价区（动态） -->
-<div class="col-12 mt-5 reviews">
+<div class="col-12 mt-5 reviews" id="reviewContainer"> 
   <h4>Customer Reviews</h4>
-  <div id="reviewsContainer">Loading reviews...</div>
+  <div>Loading reviews...</div> 
 </div>
 
 
@@ -876,8 +903,7 @@ body {
     drawer.setAttribute('aria-hidden', 'true');
   }); 
 
-
-  // ③-8 加载评论数据并渲染
+// ③-8 加载评论数据并渲染
 async function loadReviews() {
   const container = document.getElementById('reviewsContainer');
   if (!container) return;
@@ -891,22 +917,24 @@ async function loadReviews() {
       return;
     }
 
-    // 清空并插入每条评论
-    container.innerHTML = '';
+    container.innerHTML = ''; // 清空旧内容
+
     json.reviews.forEach(r => {
       const div = document.createElement('div');
       div.className = 'review border-bottom py-3';
 
       const formattedDate = formatDate(r.date);
+      const starEmojis = '⭐'.repeat(Math.max(0, Math.min(5, r.rating || 0)));
 
       div.innerHTML = `
         <strong>${escapeHTML(r.name)}</strong> 
-        <span class="text-muted">– ${r.rating} stars</span>
+        <span class="text-muted">– ${starEmojis}</span>
         <p>${escapeHTML(r.content)}</p>
         <div style="font-size: 13px;" class="text-muted">
           Reviewed in the United States on ${formattedDate}
         </div>
       `;
+
       container.appendChild(div);
     });
   } catch (err) {
@@ -931,8 +959,9 @@ function escapeHTML(str) {
   })[m]);
 }
 
-// 调用加载函数
+// 页面加载时自动调用
 loadReviews();
+
 
 </script> 
 </body>
