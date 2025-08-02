@@ -1,35 +1,10 @@
 // netlify/functions/seed-reviews.mjs
 
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 const SHOPIFY_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN;
 const API_VERSION = process.env.SHOPIFY_API_VERSION;
-const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_TOKEN;
-
-if (!SHOPIFY_DOMAIN || !API_VERSION || !ADMIN_TOKEN) {
-  throw new Error('❌ 缺少环境变量（SHOPIFY_DOMAIN、API_VERSION、ADMIN_TOKEN）');
-}
-
-const endpoint = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/graphql.json`;
-
-const sampleReviews = [
-  {
-    author: "Alice W.",
-    rating: 5,
-    content: "Absolutely love the design and comfort. Highly recommend!",
-  },
-  {
-    author: "Ben K.",
-    rating: 4,
-    content: "Solid build and elegant finish. Delivery was quick too.",
-  },
-  {
-    author: "Cindy L.",
-    rating: 5,
-    content: "Perfect chair for my study room. Looks amazing in velvet!",
-  },
-];
-
-// 替换成你实际的产品 ID（注意是产品 ID，不是 variant ID）
-const productId = "gid://shopify/Product/8541720738052";
+const ADMIN_TOKEN = process.env.SHOPIFY_ADMIN_API_TOKEN;
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,9 +12,11 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-function buildMetafieldValue(reviews) {
-  return JSON.stringify(reviews);
+if (!SHOPIFY_DOMAIN || !API_VERSION || !ADMIN_TOKEN) {
+  throw new Error('❌ 缺少环境变量（SHOPIFY_STORE_DOMAIN、SHOPIFY_API_VERSION、SHOPIFY_ADMIN_API_TOKEN）');
 }
+
+const endpoint = `https://${SHOPIFY_DOMAIN}/admin/api/${API_VERSION}/graphql.json`;
 
 async function shopifyAdminFetch(query, variables = {}) {
   const res = await fetch(endpoint, {
@@ -51,100 +28,124 @@ async function shopifyAdminFetch(query, variables = {}) {
     body: JSON.stringify({ query, variables }),
   });
 
-  const text = await res.text();
+  const json = await res.json();
 
-  if (!res.ok) {
-    console.error('❌ HTTP Error:', res.status, text);
-    throw new Error(`Shopify API HTTP error ${res.status}`);
-  }
-
-  const json = JSON.parse(text);
-
-  if (json.errors) {
-    console.error('❌ GraphQL Error:', JSON.stringify(json.errors, null, 2));
-    throw new Error('GraphQL errors from Shopify');
+  if (!res.ok || json.errors) {
+    console.error('❌ Shopify Error:', json.errors || res.statusText);
+    throw new Error('Shopify API error');
   }
 
   return json.data;
 }
 
-const UPSERT_METAFIELD_QUERY = `
-  mutation productUpdate($input: ProductInput!) {
-    productUpdate(input: $input) {
-      product {
-        id
-        metafields(first: 5) {
-          edges {
-            node {
-              key
-              value
-            }
-          }
-        }
-      }
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
+const seedReviews = [
+  {
+    name: 'Alice L.',
+    rating: 5,
+    content: 'Absolutely love the design and comfort. Highly recommended!',
+  },
+  {
+    name: 'Ben W.',
+    rating: 4,
+    content: 'Good value for money. A bit firm but great support.',
+  },
+  {
+    name: 'Clara G.',
+    rating: 5,
+    content: 'Bought it for my studio – it looks amazing!',
+  },
+];
+
+const PRODUCT_ID = 'gid://shopify/Product/8765432109876'; // 👈 替换为你的产品 ID
+
+const REVIEW_METAFIELD_NAMESPACE = 'custom';
+const REVIEW_METAFIELD_KEY = 'reviews';
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: CORS_HEADERS, body: 'OK' };
-  }
-
-  if (event.httpMethod !== 'POST') {
     return {
-      statusCode: 405,
+      statusCode: 200,
       headers: CORS_HEADERS,
-      body: 'Method Not Allowed',
+      body: 'OK',
     };
   }
 
   try {
-    const metafieldValue = buildMetafieldValue(sampleReviews);
+    const existing = await shopifyAdminFetch(`
+      query getProductMetafields($id: ID!) {
+        product(id: $id) {
+          metafield(namespace: "${REVIEW_METAFIELD_NAMESPACE}", key: "${REVIEW_METAFIELD_KEY}") {
+            id
+            value
+          }
+        }
+      }
+    `, { id: PRODUCT_ID });
 
-    const input = {
-      id: productId,
-      metafields: [
-        {
-          namespace: "custom",
-          key: "reviews",
-          type: "json",
-          value: metafieldValue,
-        },
-      ],
+    let existingReviews = [];
+    let metafieldId = null;
+
+    if (existing?.product?.metafield) {
+      metafieldId = existing.product.metafield.id;
+      existingReviews = JSON.parse(existing.product.metafield.value || '[]');
+    }
+
+    const newReviews = [...existingReviews, ...seedReviews];
+
+    const mutation = metafieldId
+      ? `
+        mutation UpdateMetafield($metafield: MetafieldInput!) {
+          metafieldUpdate(input: $metafield) {
+            metafield {
+              id
+              value
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `
+      : `
+        mutation CreateMetafield($metafield: MetafieldInput!) {
+          metafieldCreate(input: $metafield) {
+            metafield {
+              id
+              value
+            }
+            userErrors {
+              field
+              message
+            }
+          }
+        }
+      `;
+
+    const mutationInput = {
+      metafield: {
+        ...(metafieldId ? { id: metafieldId } : {
+          ownerId: PRODUCT_ID,
+          namespace: REVIEW_METAFIELD_NAMESPACE,
+          key: REVIEW_METAFIELD_KEY,
+          type: 'json',
+        }),
+        value: JSON.stringify(newReviews),
+      },
     };
 
-    const result = await shopifyAdminFetch(UPSERT_METAFIELD_QUERY, { input });
-
-    if (result?.productUpdate?.userErrors?.length) {
-      return {
-        statusCode: 400,
-        headers: CORS_HEADERS,
-        body: JSON.stringify({ error: result.productUpdate.userErrors }),
-      };
-    }
+    const result = await shopifyAdminFetch(mutation, mutationInput);
 
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ message: '✅ Seeded reviews successfully' }),
+      body: JSON.stringify({ success: true, added: seedReviews.length }),
     };
   } catch (err) {
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
-      body: JSON.stringify({ error: err.message || 'Server error' }),
+      body: JSON.stringify({ error: err.message }),
     };
   }
-
-
-
-
-
-
-
 }; 
