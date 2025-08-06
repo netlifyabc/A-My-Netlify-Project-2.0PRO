@@ -51,6 +51,7 @@ async function shopifyFetch(query, variables = {}) {
   }
 }
 
+
 // GraphQL 查询模板
 const CART_CREATE_QUERY = `
   mutation cartCreate($input: CartInput!) {
@@ -70,6 +71,16 @@ const CART_CREATE_QUERY = `
                 }
               }
             }
+          }
+        }
+        cost {
+          subtotalAmount {
+            amount
+            currencyCode
+          }
+          totalAmount {
+            amount
+            currencyCode
           }
         }
       }
@@ -99,6 +110,16 @@ const CART_LINES_ADD_QUERY = `
                 }
               }
             }
+          }
+        }
+        cost {
+          subtotalAmount {
+            amount
+            currencyCode
+          }
+          totalAmount {
+            amount
+            currencyCode
           }
         }
       }
@@ -180,6 +201,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: err.message || 'Internal Server Error' }),
     };
   }
-};
 
 
+}; 
