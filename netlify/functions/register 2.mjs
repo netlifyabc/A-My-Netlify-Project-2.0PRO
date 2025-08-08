@@ -4,23 +4,6 @@ import fetch from 'node-fetch';
 const ALLOWED_ORIGIN = 'https://netlifyabc.github.io';
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// 新增密码复杂度校验函数
-function validatePassword(password) {
-  const minLength = 8;
-  const uppercasePattern = /[A-Z]/;
-  const lowercasePattern = /[a-z]/;
-  const digitPattern = /\d/;
-  const specialCharPattern = /[!@#$%^&*(),.?":{}|<>]/;
-
-  if (password.length < minLength) return false;
-  if (!uppercasePattern.test(password)) return false;
-  if (!lowercasePattern.test(password)) return false;
-  if (!digitPattern.test(password)) return false;
-  if (!specialCharPattern.test(password)) return false;
-
-  return true;
-}
-
 export async function handler(event) {
   const headers = {
     'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
@@ -53,23 +36,6 @@ export async function handler(event) {
         statusCode: 400,
         headers,
         body: JSON.stringify({ error: 'Missing required fields' }),
-      };
-    }
-
-    // 新增密码复杂度校验
-    if (!validatePassword(password)) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Password does not meet complexity requirements',
-          message: `密码要求：
-- 至少 8 个字符
-- 包含至少 1 个大写字母 (A-Z)
-- 包含至少 1 个小写字母 (a-z)
-- 包含至少 1 个数字 (0-9)
-- 包含至少 1 个特殊字符 (如 !@#$%^&*(),.?":{}|<>)`,
-        }),
       };
     }
 
@@ -161,6 +127,9 @@ export async function handler(event) {
       }),
     };
   }
+}
 
 
-} 
+
+
+
